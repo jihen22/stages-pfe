@@ -1,0 +1,38 @@
+<nav class="navbar navbar-expand-lg public-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home' %}">
+      <i class="bi bi-mortarboard-fill app-accent-text"></i> Stages &amp; PFE
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav"
+            aria-controls="publicNav" aria-expanded="false" aria-label="Basculer la navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="publicNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#services">Nos services</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#etapes">Comment ça marche</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#roles">Pour qui ?</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'home' %}#bientot">Bientôt</a></li>
+      </ul>
+
+      <ul class="navbar-nav align-items-lg-center mb-2 mb-lg-0 gap-lg-1">
+        <li class="nav-item">{% include "partials/_theme_menu.html" %}</li>
+        {% if user.is_authenticated %}
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-primary btn-sm" href="{% url 'accounts:dashboard' %}">
+              <i class="bi bi-speedometer2"></i> Mon tableau de bord
+            </a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:login' %}">Se connecter</a>
+          </li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-primary btn-sm" href="{% url 'accounts:register' %}">Créer un compte</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

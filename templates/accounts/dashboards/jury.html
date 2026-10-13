@@ -1,0 +1,30 @@
+{% extends "base_app.html" %}
+
+{% block title %}Tableau de bord — Jury{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }}</h1>
+  <p class="text-muted mb-0">Espace jury — consultez vos soutenances et saisissez les notes.</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-primary"><i class="bi bi-calendar-check"></i></div>
+      <h5 class="card-title mt-2">Mes soutenances</h5>
+      <p class="card-text text-muted">Soutenances auxquelles vous participez.</p>
+      <a href="{% url 'soutenances:mes_soutenances' %}" class="btn btn-primary btn-sm">Consulter</a>
+    </div></div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-success"><i class="bi bi-pencil-square"></i></div>
+      <h5 class="card-title mt-2">Saisir les notes</h5>
+      <p class="card-text text-muted">Notes et remarques pour les soutenances passées.</p>
+      <a href="{% url 'soutenances:saisir_notes' %}" class="btn btn-success btn-sm">Saisir</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

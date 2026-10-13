@@ -1,0 +1,90 @@
+{% comment %}Logged-in top bar: menu toggle, theme, notifications bell, user menu.{% endcomment %}
+<header class="app-topbar">
+  <div class="d-flex align-items-center gap-2 px-3 px-lg-4 py-2">
+    <button class="btn btn-icon d-lg-none" type="button" data-sidebar-toggle aria-label="Ouvrir le menu">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+    <a href="{% url 'home' %}" class="d-lg-none fw-bold text-decoration-none text-body">
+      <i class="bi bi-mortarboard-fill app-accent-text"></i> Stages &amp; PFE
+    </a>
+
+    <div class="ms-auto d-flex align-items-center gap-1 gap-lg-2">
+      {% include "partials/_theme_menu.html" %}
+
+      {# Notifications bell — powered by the notifications app. #}
+      <div class="dropdown">
+        <button class="btn btn-icon position-relative" type="button" data-bs-toggle="dropdown"
+                aria-expanded="false" title="Notifications" aria-label="Notifications">
+          <i class="bi bi-bell fs-5"></i>
+          {% if unread_notifications_count %}
+            <span class="badge rounded-pill text-bg-danger notification-badge">{{ unread_notifications_count }}</span>
+          {% endif %}
+        </button>
+        <div class="dropdown-menu dropdown-menu-end shadow-sm p-0 notification-menu">
+          <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+            <span class="fw-semibold small">Notifications</span>
+            {% if unread_notifications_count %}
+              <span class="badge text-bg-danger rounded-pill">{{ unread_notifications_count }}</span>
+            {% endif %}
+          </div>
+          {% if recent_notifications %}
+            <div class="list-group list-group-flush">
+              {% for n in recent_notifications %}
+                <a class="list-group-item list-group-item-action {% if not n.is_read %}fw-semibold{% endif %}"
+                   href="{% url 'notifications:read' n.pk %}">
+                  <div class="d-flex justify-content-between gap-2">
+                    <span class="small">{{ n.message }}</span>
+                    {% if not n.is_read %}<span class="badge text-bg-primary rounded-pill align-self-center">Nouveau</span>{% endif %}
+                  </div>
+                  <div class="text-muted small">{{ n.created_at|timesince }}</div>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center text-muted small py-4 px-3">
+              <i class="bi bi-bell-slash d-block fs-3 mb-2"></i>
+              Aucune notification pour le moment.
+            </div>
+          {% endif %}
+          <div class="border-top">
+            <a class="dropdown-item small py-2 text-center" href="{% url 'notifications:list' %}">
+              Voir toutes les notifications
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="dropdown">
+        <button class="btn btn-link text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-1 text-body"
+                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="avatar-circle">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
+          <span class="d-none d-md-flex flex-column align-items-start lh-sm">
+            <span class="fw-semibold small">{{ user.get_full_name|default:user.username }}</span>
+            <span class="badge bg-primary-subtle text-primary-emphasis role-badge mt-1">{{ user.get_role_display }}</span>
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+          <li class="px-3 py-2">
+            <div class="fw-semibold small">{{ user.get_full_name|default:user.username }}</div>
+            <div class="text-muted small">{{ user.email|default:"—" }}</div>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{% url 'accounts:preferences' %}">
+              <i class="bi bi-person-gear me-2"></i>Mon profil / Apparence
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item text-danger">
+                <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>

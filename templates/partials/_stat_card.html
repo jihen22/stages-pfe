@@ -1,0 +1,18 @@
+{% comment %}
+Statistic card.
+
+Usage:
+  {% include "partials/_stat_card.html" with label="Candidatures" value=total
+             icon="file-earmark-text" color="primary" %}
+{% endcomment %}
+<div class="card stat-card h-100">
+  <div class="card-body d-flex align-items-center gap-3">
+    <div class="stat-card-icon bg-{{ color|default:'primary' }}-subtle text-{{ color|default:'primary' }}">
+      <i class="bi bi-{{ icon|default:'bar-chart' }}"></i>
+    </div>
+    <div>
+      <div class="stat-card-value">{{ value }}</div>
+      <div class="stat-card-label text-muted">{{ label }}</div>
+    </div>
+  </div>
+</div>

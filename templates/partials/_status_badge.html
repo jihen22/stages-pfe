@@ -1,0 +1,20 @@
+{% comment %}
+Single, consistent colour per status code across the whole site.
+
+Usage:
+  {% include "partials/_status_badge.html" with status=obj.status label=obj.get_status_display %}
+  {% include "partials/_status_badge.html" with status="ACCEPTEE" label="Acceptée" %}
+{% endcomment %}
+{% if status == 'PUBLIEE' or status == 'ACCEPTEE' or status == 'VALIDE' or status == 'SOUTENU' %}
+  <span class="badge rounded-pill text-bg-success">{{ label|default:status }}</span>
+{% elif status == 'REFUSEE' %}
+  <span class="badge rounded-pill text-bg-danger">{{ label|default:status }}</span>
+{% elif status == 'EN_ATTENTE' or status == 'EN_VALIDATION' or status == 'CORRECTION_DEMANDEE' %}
+  <span class="badge rounded-pill text-bg-warning">{{ label|default:status }}</span>
+{% elif status == 'SOUMIS' or status == 'SOUTENANCE_PLANIFIEE' %}
+  <span class="badge rounded-pill text-bg-info">{{ label|default:status }}</span>
+{% elif status == 'EN_COURS' %}
+  <span class="badge rounded-pill text-bg-primary">{{ label|default:status }}</span>
+{% else %}
+  <span class="badge rounded-pill text-bg-secondary">{{ label|default:status }}</span>
+{% endif %}

@@ -1,0 +1,129 @@
+{% extends "base_app.html" %}
+
+{% block title %}Tableau de bord — Étudiant{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }} 👋</h1>
+    <p class="text-muted mb-0">Espace étudiant — trouvez un stage ou un PFE et suivez vos candidatures.</p>
+  </div>
+  <a href="{% url 'offres:offre_list' %}" class="btn btn-primary">
+    <i class="bi bi-search me-1"></i> Parcourir les offres
+  </a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Candidatures" value=candidatures_total icon="file-earmark-text" color="primary" %}
+  </div>
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="En attente" value=candidatures_en_attente icon="hourglass-split" color="warning" %}
+  </div>
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Acceptées" value=candidatures_acceptees icon="check-circle" color="success" %}
+  </div>
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Refusées" value=candidatures_refusees icon="x-circle" color="danger" %}
+  </div>
+</div>
+
+{# Profile completion #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <div class="fw-semibold"><i class="bi bi-person-badge me-1"></i> Profil complet à {{ profil_completion }}%</div>
+      {% if profil_completion < 100 %}
+        <a href="{% url 'accounts:profil_etudiant' %}" class="btn btn-sm btn-primary">
+          <i class="bi bi-pencil me-1"></i> Compléter mon profil
+        </a>
+      {% else %}
+        <span class="badge text-bg-success rounded-pill"><i class="bi bi-check-lg me-1"></i> Profil complet</span>
+      {% endif %}
+    </div>
+    <div class="progress" role="progressbar" aria-label="Complétion du profil"
+         aria-valuenow="{{ profil_completion }}" aria-valuemin="0" aria-valuemax="100" style="height: .6rem;">
+      <div class="progress-bar" style="width: {{ profil_completion }}%"></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Dernières candidatures</span>
+        <a href="{% url 'candidatures:mes_candidatures' %}" class="small text-decoration-none">Tout voir</a>
+      </div>
+      {% if dernieres_candidatures %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr><th>Offre</th><th>Date</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+              {% for c in dernieres_candidatures %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ c.offre.titre }}</div>
+                    <div class="text-muted small">{{ c.offre.get_type_display }}</div>
+                  </td>
+                  <td class="text-muted small">{{ c.date_candidature|date:"d/m/Y" }}</td>
+                  <td>{% include "partials/_status_badge.html" with status=c.status label=c.get_status_display %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        {% url 'offres:offre_list' as offres_url %}
+        {% include "partials/_empty_state.html" with icon="file-earmark-text" title="Aucune candidature" text="Vous n'avez pas encore postulé à une offre." action_url=offres_url action_label="Parcourir les offres" action_icon="search" %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-4">
+      <div class="card-header fw-semibold">Offres récentes</div>
+      {% if offres_recentes %}
+        <ul class="list-group list-group-flush">
+          {% for offre in offres_recentes %}
+            <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <div class="fw-semibold">{{ offre.titre }}</div>
+                <div class="text-muted small">
+                  {{ offre.get_type_display }}
+                  {% if offre.encadrant_pro %}· {{ offre.encadrant_pro.get_full_name|default:offre.encadrant_pro.username }}{% endif %}
+                </div>
+              </div>
+              {% if offre.pk in offres_postulees %}
+                <span class="badge text-bg-secondary rounded-pill align-self-center">Déjà postulé</span>
+              {% else %}
+                <a href="{% url 'candidatures:postuler' offre.pk %}" class="btn btn-sm btn-primary align-self-center">Postuler</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="card-body">
+          {% include "partials/_empty_state.html" with icon="briefcase" title="Aucune offre" text="Aucune offre publiée pour le moment." %}
+        </div>
+      {% endif %}
+      <div class="card-footer text-end">
+        <a href="{% url 'offres:offre_list' %}" class="small text-decoration-none">Voir toutes les offres</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body d-grid gap-2">
+        <a href="{% url 'pfe:mon_pfe' %}" class="btn btn-outline-primary">
+          <i class="bi bi-kanban me-1"></i> Mon PFE
+        </a>
+        <a href="{% url 'soutenances:ma_soutenance' %}" class="btn btn-outline-primary">
+          <i class="bi bi-calendar-event me-1"></i> Ma soutenance
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

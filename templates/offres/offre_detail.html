@@ -1,0 +1,54 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ offre.titre }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <a href="{% url 'offres:offre_list' %}" class="btn btn-sm btn-link px-0 mb-2">
+      <i class="bi bi-arrow-left"></i> Retour aux offres
+    </a>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <span class="badge text-bg-{% if offre.type == 'PFE' %}info{% else %}primary{% endif %} mb-2">{{ offre.get_type_display }}</span>
+            <h1 class="h3 mb-1">{{ offre.titre }}</h1>
+            <p class="text-muted mb-0">
+              <i class="bi bi-building"></i> {{ offre.encadrant_pro.get_full_name|default:offre.encadrant_pro.username }}
+            </p>
+          </div>
+          <div class="text-md-end text-muted small">
+            {% if offre.duree %}<div><i class="bi bi-clock"></i> Durée : {{ offre.duree }}</div>{% endif %}
+            {% if offre.date_publication %}<div><i class="bi bi-calendar"></i> Publiée le {{ offre.date_publication|date:"d/m/Y" }}</div>{% endif %}
+          </div>
+        </div>
+
+        <hr>
+
+        <h6 class="text-uppercase text-muted small">Description</h6>
+        <p style="white-space: pre-line;">{{ offre.description }}</p>
+
+        {% if offre.competences %}
+          <h6 class="text-uppercase text-muted small mt-4">Compétences requises</h6>
+          <p class="mb-0">{{ offre.competences }}</p>
+        {% endif %}
+
+        <hr>
+
+        {% if deja_postule %}
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-check-circle"></i> Vous avez déjà postulé à cette offre.
+            <a href="{% url 'candidatures:mes_candidatures' %}" class="alert-link">Voir mes candidatures</a>
+          </div>
+        {% else %}
+          <a href="{% url 'candidatures:postuler' offre.pk %}" class="btn btn-primary">
+            <i class="bi bi-send"></i> Postuler à cette offre
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

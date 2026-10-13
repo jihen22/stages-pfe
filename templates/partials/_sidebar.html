@@ -1,0 +1,102 @@
+{% comment %}Left navigation. Links depend on the user's role.{% endcomment %}
+<aside class="app-sidebar" id="appSidebar" aria-label="Navigation principale">
+  <div class="app-sidebar-brand">
+    <a href="{% url 'home' %}" class="d-flex align-items-center gap-2 text-decoration-none text-body">
+      <i class="bi bi-mortarboard-fill app-accent-text fs-4"></i>
+      <span class="fw-bold">Stages &amp; PFE</span>
+    </a>
+    <button class="btn btn-sm btn-link ms-auto text-body d-lg-none" type="button"
+            data-sidebar-close aria-label="Fermer le menu">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  {% with rn=request.resolver_match.url_name %}
+    <nav class="app-sidebar-nav nav flex-column">
+      <a class="nav-link {% if rn == 'dashboard' or rn == 'dashboard_etudiant' or rn == 'dashboard_encadrant_pro' or rn == 'dashboard_encadrant_acad' or rn == 'dashboard_admin' or rn == 'dashboard_jury' %}active{% endif %}"
+         href="{% url 'accounts:dashboard' %}">
+        <i class="bi bi-speedometer2"></i> Tableau de bord
+      </a>
+
+      {% if user.role == 'ETUDIANT' %}
+        <div class="app-sidebar-section">Candidatures</div>
+        <a class="nav-link {% if rn == 'offre_list' or rn == 'offre_detail' %}active{% endif %}" href="{% url 'offres:offre_list' %}">
+          <i class="bi bi-briefcase"></i> Offres
+        </a>
+        <a class="nav-link {% if rn == 'mes_candidatures' or rn == 'postuler' %}active{% endif %}" href="{% url 'candidatures:mes_candidatures' %}">
+          <i class="bi bi-file-earmark-text"></i> Mes candidatures
+        </a>
+
+        <div class="app-sidebar-section">Mon profil</div>
+        <a class="nav-link {% if rn == 'profil_etudiant' %}active{% endif %}" href="{% url 'accounts:profil_etudiant' %}">
+          <i class="bi bi-person-badge"></i> Mon profil étudiant
+        </a>
+
+        <div class="app-sidebar-section">Mon projet</div>
+        <a class="nav-link {% if rn == 'mon_pfe' %}active{% endif %}" href="{% url 'pfe:mon_pfe' %}">
+          <i class="bi bi-kanban"></i> Mon PFE
+        </a>
+        <a class="nav-link {% if rn == 'ma_soutenance' %}active{% endif %}" href="{% url 'soutenances:ma_soutenance' %}">
+          <i class="bi bi-calendar-event"></i> Ma soutenance
+        </a>
+
+      {% elif user.role == 'ENCADRANT_PRO' %}
+        <div class="app-sidebar-section">Mes offres</div>
+        <a class="nav-link {% if rn == 'mes_offres' or rn == 'offre_update' %}active{% endif %}" href="{% url 'offres:mes_offres' %}">
+          <i class="bi bi-briefcase"></i> Mes offres
+        </a>
+        <a class="nav-link {% if rn == 'offre_create' %}active{% endif %}" href="{% url 'offres:offre_create' %}">
+          <i class="bi bi-plus-circle"></i> Nouvelle offre
+        </a>
+        <a class="nav-link {% if rn == 'candidatures_recues' %}active{% endif %}" href="{% url 'candidatures:candidatures_recues' %}">
+          <i class="bi bi-inbox"></i> Candidatures reçues
+        </a>
+
+      {% elif user.role == 'ENCADRANT_ACAD' %}
+        <div class="app-sidebar-section">Encadrement</div>
+        <a class="nav-link {% if rn == 'mes_etudiants' %}active{% endif %}" href="{% url 'pfe:mes_etudiants' %}">
+          <i class="bi bi-people"></i> Mes étudiants
+        </a>
+        <a class="nav-link {% if rn == 'livrables_a_valider' %}active{% endif %}" href="{% url 'pfe:livrables_a_valider' %}">
+          <i class="bi bi-clipboard-check"></i> Livrables à valider
+        </a>
+
+      {% elif user.role == 'ADMIN' %}
+        <div class="app-sidebar-section">Pilotage</div>
+        <a class="nav-link {% if rn == 'offres_a_valider' %}active{% endif %}" href="{% url 'offres:offres_a_valider' %}">
+          <i class="bi bi-patch-check"></i> Offres à valider
+        </a>
+        <a class="nav-link {% if rn == 'affectations' %}active{% endif %}" href="{% url 'pfe:affectations' %}">
+          <i class="bi bi-diagram-3"></i> Affectations
+        </a>
+        <a class="nav-link {% if rn == 'planning' %}active{% endif %}" href="{% url 'soutenances:planning' %}">
+          <i class="bi bi-calendar3"></i> Planning soutenances
+        </a>
+        <a class="nav-link" href="{% url 'admin:index' %}">
+          <i class="bi bi-shield-lock"></i> Administration Django
+        </a>
+
+      {% elif user.role == 'JURY' %}
+        <div class="app-sidebar-section">Jury</div>
+        <a class="nav-link {% if rn == 'mes_soutenances' %}active{% endif %}" href="{% url 'soutenances:mes_soutenances' %}">
+          <i class="bi bi-calendar-check"></i> Mes soutenances
+        </a>
+        <a class="nav-link {% if rn == 'saisir_notes' %}active{% endif %}" href="{% url 'soutenances:saisir_notes' %}">
+          <i class="bi bi-pencil-square"></i> Saisir les notes
+        </a>
+      {% endif %}
+    </nav>
+
+    <div class="app-sidebar-footer">
+      <a class="nav-link {% if request.resolver_match.namespace == 'notifications' %}active{% endif %}" href="{% url 'notifications:list' %}">
+        <i class="bi bi-bell"></i> Notifications
+        {% if unread_notifications_count %}
+          <span class="badge text-bg-danger rounded-pill ms-auto">{{ unread_notifications_count }}</span>
+        {% endif %}
+      </a>
+      <a class="nav-link {% if rn == 'preferences' %}active{% endif %}" href="{% url 'accounts:preferences' %}">
+        <i class="bi bi-person-gear"></i> Mon profil
+      </a>
+    </div>
+  {% endwith %}
+</aside>

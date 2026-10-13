@@ -1,0 +1,31 @@
+{% comment %}Theme + accent dropdown. Reused by the public navbar and the app topbar.{% endcomment %}
+<div class="dropdown">
+  <button class="btn btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+          title="Thème et couleur" aria-label="Thème et couleur">
+    <i class="bi bi-circle-half fs-5"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+    <li><h6 class="dropdown-header">Thème</h6></li>
+    <li><button class="dropdown-item" type="button" data-theme-option="LIGHT"><i class="bi bi-sun me-2"></i>Clair</button></li>
+    <li><button class="dropdown-item" type="button" data-theme-option="DARK"><i class="bi bi-moon-stars me-2"></i>Sombre</button></li>
+    <li><button class="dropdown-item" type="button" data-theme-option="AUTO"><i class="bi bi-circle-half me-2"></i>Automatique</button></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header">Couleur d'accent</h6></li>
+    <li>
+      <div class="px-3 pb-2 d-flex gap-2">
+        <button class="accent-swatch" type="button" data-accent-option="BLUE" style="--sw:#2563eb" title="Bleu" aria-label="Bleu"></button>
+        <button class="accent-swatch" type="button" data-accent-option="GREEN" style="--sw:#16a34a" title="Vert" aria-label="Vert"></button>
+        <button class="accent-swatch" type="button" data-accent-option="PURPLE" style="--sw:#7c3aed" title="Violet" aria-label="Violet"></button>
+        <button class="accent-swatch" type="button" data-accent-option="ORANGE" style="--sw:#ea580c" title="Orange" aria-label="Orange"></button>
+      </div>
+    </li>
+    {% if user.is_authenticated %}
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <a class="dropdown-item" href="{% url 'accounts:preferences' %}">
+          <i class="bi bi-sliders me-2"></i>Apparence…
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+</div>

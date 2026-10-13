@@ -1,0 +1,101 @@
+{% extends "base_app.html" %}
+
+{% block title %}Candidatures reçues{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Candidatures reçues</h1>
+    <p class="text-muted mb-0">Acceptez ou refusez les candidatures reçues sur vos offres.</p>
+  </div>
+</div>
+
+<form method="get" class="card mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label for="offre" class="form-label small text-muted">Filtrer par offre</label>
+        <select class="form-select" id="offre" name="offre">
+          <option value="">Toutes mes offres</option>
+          {% for offre in mes_offres %}
+            <option value="{{ offre.pk }}" {% if offre.pk|stringformat:"s" == offre_selected %}selected{% endif %}>
+              {{ offre.titre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if candidatures %}
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Étudiant</th>
+            <th>Offre</th>
+            <th>Reçue le</th>
+            <th>Statut</th>
+            <th class="text-end">Pièces</th>
+            <th class="text-end">Décision</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for candidature in candidatures %}
+            <tr>
+              <td class="fw-semibold">
+                {{ candidature.etudiant.get_full_name|default:candidature.etudiant.username }}
+              </td>
+              <td>{{ candidature.offre.titre }}</td>
+              <td class="text-muted small">{{ candidature.date_candidature|date:"d/m/Y" }}</td>
+              <td>
+                {% include "partials/_status_badge.html" with status=candidature.status label=candidature.get_status_display %}
+              </td>
+              <td class="text-end">
+                {% if candidature.cv %}
+                  <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="CV">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                  </a>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
+                        data-bs-target="#lettre-{{ candidature.pk }}" title="Lettre de motivation">
+                  <i class="bi bi-envelope-open"></i>
+                </button>
+              </td>
+              <td class="text-end">
+                {% if candidature.status == 'EN_ATTENTE' %}
+                  <form method="post" action="{% url 'candidatures:accepter' candidature.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
+                  </form>
+                  <form method="post" action="{% url 'candidatures:refuser' candidature.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i></button>
+                  </form>
+                {% else %}
+                  <span class="text-muted small">Traitée</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr class="collapse" id="lettre-{{ candidature.pk }}">
+              <td colspan="6" class="bg-light">
+                <strong class="small text-muted">Lettre de motivation :</strong>
+                <p class="mb-0" style="white-space: pre-line;">{{ candidature.lettre_motivation }}</p>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card"><div class="card-body">
+    {% include "partials/_empty_state.html" with icon="inbox" title="Aucune candidature reçue" text="Aucune candidature reçue pour le moment." %}
+  </div></div>
+{% endif %}
+{% endblock %}

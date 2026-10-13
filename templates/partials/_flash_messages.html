@@ -1,0 +1,25 @@
+{% comment %}
+Flash messages rendered as Bootstrap toasts. Auto-shown by static/js/app.js.
+{% endcomment %}
+{% if messages %}
+  <div class="toast-container" aria-live="polite" aria-atomic="true">
+    {% for message in messages %}
+      {% with tags=message.tags|default:'secondary' %}
+        <div class="toast align-items-center text-bg-{{ tags }} border-0" role="alert"
+             data-bs-autohide="true" data-bs-delay="5000">
+          <div class="d-flex">
+            <div class="toast-body">
+              {% if tags == 'success' %}<i class="bi bi-check-circle me-2"></i>
+              {% elif tags == 'danger' %}<i class="bi bi-exclamation-octagon me-2"></i>
+              {% elif tags == 'warning' %}<i class="bi bi-exclamation-triangle me-2"></i>
+              {% else %}<i class="bi bi-info-circle me-2"></i>{% endif %}
+              {{ message }}
+            </div>
+            <button type="button" class="btn-close {% if tags != 'warning' %}btn-close-white{% endif %} me-2 m-auto"
+                    data-bs-dismiss="toast" aria-label="Fermer"></button>
+          </div>
+        </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+{% endif %}

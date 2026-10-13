@@ -1,0 +1,276 @@
+{% extends "base_public.html" %}
+
+{% block title %}Plateforme de Gestion des Stages et PFE{% endblock %}
+
+{% block content %}
+{# ================= HERO ================= #}
+<section class="landing-hero mb-5">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill mb-3">
+        <i class="bi bi-stars"></i> Plateforme académique
+      </span>
+      <h1 class="display-4 mb-3">Gérez vos stages et PFE, de l'offre à la soutenance</h1>
+      <p class="lead text-muted mb-4">
+        Une seule plateforme pour publier des offres, candidater en ligne, suivre les
+        projets de fin d'études, déposer les livrables et organiser les soutenances.
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-speedometer2"></i> Aller à mon tableau de bord
+          </a>
+          <a href="{% url 'accounts:preferences' %}" class="btn btn-outline-secondary btn-lg">
+            Mon profil
+          </a>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-box-arrow-in-right"></i> Se connecter
+          </a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary btn-lg">
+            Créer un compte étudiant
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="row g-3">
+        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
+          <div class="service-icon mb-2"><i class="bi bi-briefcase"></i></div>
+          <div class="fw-semibold">Offres &amp; PFE</div>
+          <div class="text-muted small">Publiées par les entreprises</div>
+        </div></div></div>
+        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
+          <div class="service-icon mb-2"><i class="bi bi-send-check"></i></div>
+          <div class="fw-semibold">Candidatures</div>
+          <div class="text-muted small">100% en ligne</div>
+        </div></div></div>
+        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
+          <div class="service-icon mb-2"><i class="bi bi-kanban"></i></div>
+          <div class="fw-semibold">Suivi PFE</div>
+          <div class="text-muted small">Livrables &amp; versions</div>
+        </div></div></div>
+        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
+          <div class="service-icon mb-2"><i class="bi bi-mortarboard"></i></div>
+          <div class="fw-semibold">Soutenances</div>
+          <div class="text-muted small">Planning &amp; jury</div>
+        </div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ================= SERVICES ================= #}
+<section id="services" class="mb-5">
+  <div class="text-center mb-4">
+    <div class="section-eyebrow mb-1">Nos services</div>
+    <h2 class="section-title h1 mb-2">Tout au même endroit</h2>
+    <p class="text-muted mb-0">De la publication d'une offre à la soutenance finale.</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-briefcase"></i></div>
+      <h5 class="card-title">Offres de stage / PFE</h5>
+      <p class="text-muted mb-0">Publiez, validez et diffusez les offres de stage et de PFE aux étudiants.</p>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-file-earmark-text"></i></div>
+      <h5 class="card-title">Candidatures en ligne</h5>
+      <p class="text-muted mb-0">Postulez avec CV et lettre de motivation, et recevez la décision en temps réel.</p>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-clipboard-check"></i></div>
+      <h5 class="card-title">Suivi et livrables</h5>
+      <p class="text-muted mb-0">Déposez vos rapports, versionnez-les et suivez la validation de l'encadrant.</p>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-calendar-event"></i></div>
+      <h5 class="card-title">Planification des soutenances</h5>
+      <p class="text-muted mb-0">Planifiez les dates, les salles et la composition du jury.</p>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-folder2-open"></i></div>
+      <h5 class="card-title">Documents administratifs</h5>
+      <p class="text-muted mb-0">Centralisez CV, conventions, rapports et attestations au même endroit.</p>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-speedometer2"></i></div>
+      <h5 class="card-title">Tableaux de bord</h5>
+      <p class="text-muted mb-0">Chaque rôle dispose d'un espace dédié avec ses indicateurs clés.</p>
+    </div></div></div>
+  </div>
+</section>
+
+{# ================= COMMENT ÇA MARCHE ================= #}
+<section id="etapes" class="mb-5">
+  <div class="text-center mb-4">
+    <div class="section-eyebrow mb-1">Comment ça marche</div>
+    <h2 class="section-title h1 mb-2">4 étapes, un parcours clair</h2>
+  </div>
+  <div class="row g-4">
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
+      <div class="step-number mb-3">1</div>
+      <h5>Publier</h5>
+      <p class="text-muted small mb-0">L'entreprise crée une offre, l'administration la valide et la publie.</p>
+    </div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
+      <div class="step-number mb-3">2</div>
+      <h5>Postuler</h5>
+      <p class="text-muted small mb-0">L'étudiant candidate avec son CV et sa lettre de motivation.</p>
+    </div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
+      <div class="step-number mb-3">3</div>
+      <h5>Suivre</h5>
+      <p class="text-muted small mb-0">Le PFE est créé, les encadrants suivent les livrables et versions.</p>
+    </div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
+      <div class="step-number mb-3">4</div>
+      <h5>Soutenir</h5>
+      <p class="text-muted small mb-0">La soutenance est planifiée et le jury est désigné.</p>
+    </div></div></div>
+  </div>
+</section>
+
+{# ================= POUR QUI ================= #}
+<section id="roles" class="mb-5">
+  <div class="text-center mb-4">
+    <div class="section-eyebrow mb-1">Pour qui ?</div>
+    <h2 class="section-title h1 mb-2">Un espace pour chaque rôle</h2>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-mortarboard"></i></div>
+      <h5>Étudiant</h5>
+      <ul class="text-muted small mb-0 ps-3">
+        <li>Parcourir les offres et candidater en ligne</li>
+        <li>Suivre l'avancement de mon PFE et mes livrables</li>
+        <li>Consulter ma soutenance et mon jury</li>
+      </ul>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-building"></i></div>
+      <h5>Encadrant professionnel</h5>
+      <ul class="text-muted small mb-0 ps-3">
+        <li>Publier et soumettre des offres de stage / PFE</li>
+        <li>Recevoir et traiter les candidatures</li>
+        <li>Suivre les projets acceptés par mon entreprise</li>
+      </ul>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-person-workspace"></i></div>
+      <h5>Encadrant académique</h5>
+      <ul class="text-muted small mb-0 ps-3">
+        <li>Suivre mes étudiants et leurs projets</li>
+        <li>Valider ou demander la correction des livrables</li>
+        <li>Être informé de chaque dépôt</li>
+      </ul>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-shield-check"></i></div>
+      <h5>Administration</h5>
+      <ul class="text-muted small mb-0 ps-3">
+        <li>Valider les offres soumises par les entreprises</li>
+        <li>Affecter les étudiants et organiser le planning</li>
+        <li>Superviser l'ensemble de la plateforme</li>
+      </ul>
+    </div></div></div>
+    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
+      <div class="service-icon mb-3"><i class="bi bi-people"></i></div>
+      <h5>Jury</h5>
+      <ul class="text-muted small mb-0 ps-3">
+        <li>Consulter les soutenances planifiées</li>
+        <li>Accéder aux dossiers et livrables</li>
+        <li>Saisir les notes et remarques</li>
+      </ul>
+    </div></div></div>
+  </div>
+</section>
+
+{# ================= BIENTÔT ================= #}
+<section id="bientot" class="mb-5">
+  <div class="text-center mb-4">
+    <div class="section-eyebrow mb-1">Feuille de route</div>
+    <h2 class="section-title h1 mb-2">Bientôt : aide à la décision</h2>
+    <p class="text-muted mb-0">Des outils intelligents pour assister étudiants et encadrants.</p>
+  </div>
+  <div class="row g-3">
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
+      <div class="fw-semibold"><i class="bi bi-magic app-accent-text"></i> Matching CV / offres</div>
+      <div class="text-muted small mt-1">Suggestion automatique des offres adaptées à votre profil.</div>
+    </div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
+      <div class="fw-semibold"><i class="bi bi-shield-exclamation app-accent-text"></i> Indicateur de risque</div>
+      <div class="text-muted small mt-1">Repérage des projets susceptibles de prendre du retard.</div>
+    </div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
+      <div class="fw-semibold"><i class="bi bi-files app-accent-text"></i> Similarité des rapports</div>
+      <div class="text-muted small mt-1">Comparaison des versions d'un même livrable.</div>
+    </div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
+      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
+      <div class="fw-semibold"><i class="bi bi-search app-accent-text"></i> Détection d'anomalies</div>
+      <div class="text-muted small mt-1">Alerte sur les dépôts ou notes inhabituels.</div>
+    </div></div></div>
+  </div>
+</section>
+
+{# ================= CTA ================= #}
+<section class="cta-band p-4 p-lg-5 mb-2">
+  <div class="row align-items-center g-3">
+    <div class="col-lg-8">
+      <h2 class="h2 fw-bold mb-1">Prêt à démarrer votre projet ?</h2>
+      <p class="mb-0 opacity-75">Rejoignez la plateforme et centralisez tout votre parcours stage &amp; PFE.</p>
+    </div>
+    <div class="col-lg-4 text-lg-end">
+      {% if user.is_authenticated %}
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-light btn-lg">
+          <i class="bi bi-speedometer2"></i> Mon tableau de bord
+        </a>
+      {% else %}
+        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+          <i class="bi bi-person-plus"></i> Créer un compte étudiant
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block footer %}
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="fw-bold fs-5 text-body">
+      <i class="bi bi-mortarboard-fill app-accent-text"></i> Stages &amp; PFE
+    </div>
+    <p class="mt-2 mb-0">
+      La plateforme de gestion des stages et des projets de fin d'études :
+      offres, candidatures, livrables et soutenances.
+    </p>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="fw-semibold text-body mb-2">Navigation</div>
+    <ul class="list-unstyled mb-0">
+      <li><a class="link-secondary" href="{% url 'home' %}#services">Services</a></li>
+      <li><a class="link-secondary" href="{% url 'home' %}#etapes">Étapes</a></li>
+      <li><a class="link-secondary" href="{% url 'home' %}#roles">Pour qui ?</a></li>
+    </ul>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="fw-semibold text-body mb-2">Compte</div>
+    <ul class="list-unstyled mb-0">
+      <li><a class="link-secondary" href="{% url 'accounts:login' %}">Connexion</a></li>
+      <li><a class="link-secondary" href="{% url 'accounts:register' %}">Inscription étudiant</a></li>
+    </ul>
+  </div>
+  <div class="col-lg-3">
+    <div class="fw-semibold text-body mb-2">Plateforme</div>
+    <p class="mb-0">
+      Stage &amp; PFE &mdash; {% now "Y" %}<br>
+      Fait pour les étudiants, encadrants, jury et administration.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if form.instance.pk %}Modifier l'offre{% else %}Nouvelle offre{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <a href="{% url 'offres:mes_offres' %}" class="btn btn-sm btn-link px-0 mb-2">
+      <i class="bi bi-arrow-left"></i> Retour à mes offres
+    </a>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-3">
+          {% if form.instance.pk %}Modifier l'offre{% else %}Nouvelle offre{% endif %}
+        </h1>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <div class="d-flex gap-2">
+            <button type="submit" name="action" value="brouillon" class="btn btn-outline-secondary">
+              <i class="bi bi-save"></i> Enregistrer (brouillon)
+            </button>
+            <button type="submit" name="action" value="soumettre" class="btn btn-primary">
+              <i class="bi bi-send"></i> Soumettre à validation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

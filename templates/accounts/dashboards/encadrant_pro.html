@@ -1,0 +1,41 @@
+{% extends "base_app.html" %}
+
+{% block title %}Tableau de bord — Encadrant professionnel{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }}</h1>
+  <p class="text-muted mb-0">Espace encadrant professionnel — gérez vos offres et les candidatures reçues.</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="dashboard-icon text-primary"><i class="bi bi-briefcase"></i></div>
+      <h5 class="card-title mt-2">Mes offres</h5>
+      <p class="card-text text-muted">{{ offres_count }} offre(s), dont {{ offres_publiees_count }} publiée(s).</p>
+      <a href="{% url 'offres:mes_offres' %}" class="btn btn-primary btn-sm">Gérer mes offres</a>
+    </div></div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="dashboard-icon text-success"><i class="bi bi-inbox"></i></div>
+      <h5 class="card-title mt-2">Candidatures reçues</h5>
+      <p class="card-text text-muted">
+        {{ candidatures_count }} candidature(s), dont {{ candidatures_attente_count }} en attente.
+      </p>
+      <a href="{% url 'candidatures:candidatures_recues' %}" class="btn btn-success btn-sm">Voir les candidatures</a>
+    </div></div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card h-100"><div class="card-body">
+      <div class="dashboard-icon text-info"><i class="bi bi-plus-circle"></i></div>
+      <h5 class="card-title mt-2">Nouvelle offre</h5>
+      <p class="card-text text-muted">Créez une offre de stage ou de PFE.</p>
+      <a href="{% url 'offres:offre_create' %}" class="btn btn-info btn-sm">Créer une offre</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mon profil / Apparence{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Mon profil / Apparence</h1>
+  <p class="text-muted mb-0">Personnalisez l'interface : le choix est enregistré sur votre compte.</p>
+</div>
+
+<div class="row g-4">
+  {# ---------- Account summary ---------- #}
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <span class="avatar-circle" style="width:3.4rem;height:3.4rem;font-size:1.3rem;">
+            {{ user.first_name|default:user.username|slice:":1"|upper }}
+          </span>
+          <div>
+            <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+            <span class="badge bg-primary-subtle text-primary-emphasis">{{ user.get_role_display }}</span>
+          </div>
+        </div>
+        <dl class="row mb-0 small">
+          <dt class="col-4 text-muted">Identifiant</dt><dd class="col-8">{{ user.username }}</dd>
+          <dt class="col-4 text-muted">E-mail</dt><dd class="col-8">{{ user.email|default:"—" }}</dd>
+          <dt class="col-4 text-muted">Rôle</dt><dd class="col-8">{{ user.get_role_display }}</dd>
+          <dt class="col-4 text-muted">Membre depuis</dt><dd class="col-8">{{ user.date_joined|date:"d/m/Y" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Appearance ---------- #}
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 mb-1">Apparence</h2>
+        <p class="text-muted small mb-4">
+          Les changements sont appliqués immédiatement et enregistrés automatiquement.
+        </p>
+
+        <h3 class="h6 text-uppercase text-muted small mb-2">Thème</h3>
+        <div class="row g-3 mb-4">
+          {% for value, label in themes %}
+            <div class="col-6 col-md-4">
+              <label class="theme-choice">
+                <input type="radio" name="theme" value="{{ value }}"
+                       data-theme-option="{{ value }}" {% if user.theme == value %}checked{% endif %}>
+                <i class="bi {% if value == 'LIGHT' %}bi-sun{% elif value == 'DARK' %}bi-moon-stars{% else %}bi-circle-half{% endif %} fs-4 app-accent-text"></i>
+                <span>
+                  <span class="d-block fw-semibold">{{ label }}</span>
+                  {% if value == 'AUTO' %}<span class="d-block text-muted small">Suit le système</span>{% endif %}
+                </span>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+
+        <h3 class="h6 text-uppercase text-muted small mb-2">Couleur d'accent</h3>
+        <div class="row g-3 mb-4">
+          {% for value, label in accents %}
+            <div class="col-6 col-md-3">
+              <label class="accent-choice">
+                <input type="radio" name="accent" value="{{ value }}"
+                       data-accent-option="{{ value }}" {% if user.accent == value %}checked{% endif %}>
+                <span class="accent-dot"
+                      style="background:{% if value == 'BLUE' %}#2563eb{% elif value == 'GREEN' %}#16a34a{% elif value == 'PURPLE' %}#7c3aed{% else %}#ea580c{% endif %};"></span>
+                <span class="fw-semibold">{{ label }}</span>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+
+        <h3 class="h6 text-uppercase text-muted small mb-2">Aperçu en direct</h3>
+        <div class="preview-panel p-4">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <button type="button" class="btn btn-primary">Bouton principal</button>
+            <button type="button" class="btn btn-outline-primary">Bouton secondaire</button>
+            <a href="#" class="link-primary">Un lien</a>
+            <span class="badge text-bg-success rounded-pill">Acceptée</span>
+            <span class="badge text-bg-warning rounded-pill">En attente</span>
+            <span class="badge text-bg-info rounded-pill">Soumis</span>
+          </div>
+          <div class="progress mb-3" role="progressbar" aria-label="Aperçu" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width:60%">60%</div>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <div class="fw-semibold mb-1">Carte d'exemple</div>
+              <p class="text-muted small mb-0">Les couleurs ci-dessus suivent votre accent et votre thème.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

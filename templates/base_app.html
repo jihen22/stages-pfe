@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block layout %}
+  <div class="app-shell">
+    {% include "partials/_sidebar.html" %}
+    <div class="app-backdrop" id="appBackdrop" hidden></div>
+
+    <div class="app-main">
+      {% include "partials/_topbar.html" %}
+
+      <main class="app-content">
+        {% include "partials/_flash_messages.html" %}
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="app-footer text-center small py-3">
+        Plateforme de Gestion des Stages et PFE &mdash; {% now "Y" %}
+      </footer>
+    </div>
+  </div>
+{% endblock %}

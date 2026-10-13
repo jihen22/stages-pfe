@@ -1,0 +1,53 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mes notifications{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h1 class="h3 mb-1">Mes notifications</h1>
+    <p class="text-muted mb-0">Suivez les événements importants de votre compte.</p>
+  </div>
+  {% if notifications %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-check2-all me-1"></i> Tout marquer comme lu
+      </button>
+    </form>
+  {% endif %}
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    {% if notifications %}
+      <div class="card">
+        <div class="list-group list-group-flush">
+          {% for n in notifications %}
+            <a class="list-group-item list-group-item-action d-flex gap-3 align-items-start {% if not n.is_read %}fw-semibold{% endif %}"
+               href="{% url 'notifications:read' n.pk %}">
+              <span class="stat-card-icon flex-shrink-0 {% if n.is_read %}bg-secondary-subtle text-secondary{% else %}bg-primary-subtle text-primary{% endif %}"
+                    style="width: 2.4rem; height: 2.4rem; font-size: 1rem;">
+                <i class="bi {% if n.is_read %}bi-bell{% else %}bi-bell-fill{% endif %}"></i>
+              </span>
+              <span class="flex-grow-1">
+                <span class="d-block">{{ n.message }}</span>
+                <span class="text-muted small fw-normal"><i class="bi bi-clock me-1"></i>{{ n.created_at|timesince }}</span>
+              </span>
+              {% if not n.is_read %}
+                <span class="badge text-bg-danger rounded-pill align-self-center">Nouveau</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="card">
+        <div class="card-body">
+          {% include "partials/_empty_state.html" with icon="bell-slash" title="Aucune notification" text="Vous n'avez aucune notification pour le moment." %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+# Dépendances Python du projet "Plateforme de Gestion des Stages et PFE".
+# Installer avec :  pip install -r requirements.txt
+# Python requis  :  3.10+
+
+Django==5.2.18

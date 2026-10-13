@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block layout %}
+  {% include "partials/_public_navbar.html" %}
+
+  <main class="public-main">
+    <div class="container py-4 py-lg-5">
+      {% include "partials/_flash_messages.html" %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="public-footer border-top mt-5 py-4">
+    <div class="container">
+      {% block footer %}
+        <div class="row g-3 align-items-center">
+          <div class="col-md-6">
+            <div class="fw-bold">
+              <i class="bi bi-mortarboard-fill app-accent-text"></i> Stages &amp; PFE
+            </div>
+            <div class="small">
+              Plateforme de Gestion des Stages et PFE &mdash; {% now "Y" %}
+            </div>
+          </div>
+          <div class="col-md-6 text-md-end small">
+            <a class="link-secondary me-3" href="{% url 'home' %}">Accueil</a>
+            <a class="link-secondary me-3" href="{% url 'accounts:login' %}">Connexion</a>
+            <a class="link-secondary" href="{% url 'accounts:register' %}">Inscription</a>
+          </div>
+        </div>
+      {% endblock %}
+    </div>
+  </footer>
+{% endblock %}

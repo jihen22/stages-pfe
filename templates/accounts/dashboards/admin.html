@@ -1,0 +1,63 @@
+{% extends "base_app.html" %}
+
+{% block title %}Tableau de bord — Administration{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">Tableau de bord administration</h1>
+  <p class="text-muted mb-0">Vue d'ensemble de la plateforme et validation des offres.</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Offres à valider" value=offres_en_validation icon="patch-check" color="warning" %}
+  </div>
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Offres publiées" value=offres_publiees icon="briefcase" color="success" %}
+  </div>
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Candidatures" value=candidatures_total icon="file-earmark-text" color="primary" %}
+  </div>
+  <div class="col-6 col-lg-3">
+    {% include "partials/_stat_card.html" with label="Utilisateurs" value=utilisateurs_total icon="people" color="secondary" %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-warning"><i class="bi bi-patch-check"></i></div>
+      <h5 class="card-title mt-2">Offres à valider</h5>
+      <p class="card-text text-muted">Validez ou refusez les offres soumises par les entreprises.</p>
+      <a href="{% url 'offres:offres_a_valider' %}" class="btn btn-warning btn-sm">Traiter les offres</a>
+    </div></div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-primary"><i class="bi bi-diagram-3"></i></div>
+      <h5 class="card-title mt-2">Affectations</h5>
+      <p class="card-text text-muted">Affecter les étudiants aux offres et aux encadrants.</p>
+      <a href="{% url 'pfe:affectations' %}" class="btn btn-primary btn-sm">Ouvrir</a>
+    </div></div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-info"><i class="bi bi-calendar3"></i></div>
+      <h5 class="card-title mt-2">Planning des soutenances</h5>
+      <p class="card-text text-muted">Planifier les dates, salles et jurys.</p>
+      <a href="{% url 'soutenances:planning' %}" class="btn btn-info btn-sm">Ouvrir</a>
+    </div></div>
+  </div>
+
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-secondary"><i class="bi bi-shield-lock"></i></div>
+      <h5 class="card-title mt-2">Administration Django</h5>
+      <p class="card-text text-muted">Accès à l'interface d'administration complète.</p>
+      <a href="{% url 'admin:index' %}" class="btn btn-secondary btn-sm">Ouvrir /admin</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

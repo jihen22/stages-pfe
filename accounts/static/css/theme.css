@@ -1,0 +1,476 @@
+/* ==========================================================================
+   Stages & PFE — single source of truth for colors, layout and components.
+   Loaded after Bootstrap so the design tokens below win the cascade.
+   Theme = data-bs-theme (light/dark, driven by Bootstrap 5.3)
+   Accent = data-accent on <html> (blue/green/purple/orange)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design tokens
+   -------------------------------------------------------------------------- */
+:root {
+  --app-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bs-font-sans-serif: var(--app-font);
+
+  --app-radius: 0.9rem;
+  --app-radius-sm: 0.6rem;
+  --app-sidebar-width: 264px;
+  --app-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.08);
+  --app-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
+  --app-shadow-hover: 0 18px 40px -20px rgba(15, 23, 42, 0.45);
+
+  /* Accent defaults (blue) — overridden by [data-accent] below. */
+  --app-accent: #2563eb;
+  --app-accent-rgb: 37, 99, 235;
+  --app-accent-soft: rgba(var(--app-accent-rgb), 0.1);
+}
+
+html[data-accent="blue"] {
+  --app-accent: #2563eb;
+  --app-accent-rgb: 37, 99, 235;
+}
+
+html[data-accent="green"] {
+  --app-accent: #16a34a;
+  --app-accent-rgb: 22, 163, 74;
+}
+
+html[data-accent="purple"] {
+  --app-accent: #7c3aed;
+  --app-accent-rgb: 124, 58, 237;
+}
+
+html[data-accent="orange"] {
+  --app-accent: #ea580c;
+  --app-accent-rgb: 234, 88, 12;
+}
+
+[data-bs-theme="dark"] {
+  --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --app-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.8);
+  --app-shadow-hover: 0 20px 44px -22px rgba(0, 0, 0, 0.85);
+}
+
+[data-bs-theme="dark"][data-accent="blue"] { --app-accent: #3b82f6; --app-accent-rgb: 59, 130, 246; }
+[data-bs-theme="dark"][data-accent="green"] { --app-accent: #22c55e; --app-accent-rgb: 34, 197, 94; }
+[data-bs-theme="dark"][data-accent="purple"] { --app-accent: #a78bfa; --app-accent-rgb: 167, 139, 250; }
+[data-bs-theme="dark"][data-accent="orange"] { --app-accent: #fb923c; --app-accent-rgb: 251, 146, 60; }
+
+/* Bridge our accent into Bootstrap's runtime variables so utilities
+   (.text-primary, .bg-primary, .text-bg-primary, links…) follow the accent. */
+:root {
+  --bs-primary: var(--app-accent);
+  --bs-primary-rgb: var(--app-accent-rgb);
+  --bs-link-color: var(--app-accent);
+  --bs-link-color-rgb: var(--app-accent-rgb);
+  --bs-link-hover-color: color-mix(in srgb, var(--app-accent) 78%, black);
+}
+
+/* --------------------------------------------------------------------------
+   2. Base
+   -------------------------------------------------------------------------- */
+body {
+  font-family: var(--app-font);
+  background-color: var(--bs-body-bg);
+  min-height: 100vh;
+}
+
+a { text-decoration: none; }
+
+.app-accent-text { color: var(--app-accent) !important; }
+
+/* Buttons / focus rings that Bootstrap generates with fixed colors. */
+.btn-primary {
+  --bs-btn-bg: var(--app-accent);
+  --bs-btn-border-color: var(--app-accent);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--app-accent) 85%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--app-accent) 80%, black);
+  --bs-btn-active-bg: color-mix(in srgb, var(--app-accent) 75%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--app-accent) 72%, black);
+  --bs-btn-disabled-bg: var(--app-accent);
+  --bs-btn-disabled-border-color: var(--app-accent);
+  --bs-btn-focus-shadow-rgb: var(--app-accent-rgb);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--app-accent);
+  --bs-btn-border-color: var(--app-accent);
+  --bs-btn-hover-bg: var(--app-accent);
+  --bs-btn-hover-border-color: var(--app-accent);
+  --bs-btn-active-bg: var(--app-accent);
+  --bs-btn-active-border-color: var(--app-accent);
+  --bs-btn-focus-shadow-rgb: var(--app-accent-rgb);
+}
+
+.page-link {
+  --bs-pagination-color: var(--app-accent);
+  --bs-pagination-hover-color: var(--app-accent);
+  --bs-pagination-focus-color: var(--app-accent);
+  --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(var(--app-accent-rgb), 0.25);
+  --bs-pagination-active-bg: var(--app-accent);
+  --bs-pagination-active-border-color: var(--app-accent);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: color-mix(in srgb, var(--app-accent) 70%, white);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.2);
+}
+
+.form-check-input:checked {
+  background-color: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+.progress-bar { background-color: var(--app-accent); }
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  background-color: var(--app-accent);
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: var(--app-accent);
+}
+
+/* Cards & tables ---------------------------------------------------------- */
+.card {
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: var(--app-radius);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.card-hover { transition: transform 0.16s ease, box-shadow 0.16s ease; }
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--app-shadow-hover);
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  font-weight: 600;
+}
+
+.table { --bs-table-bg: transparent; }
+.table > :not(caption) > * > * { vertical-align: middle; }
+.table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bs-secondary-color);
+  border-bottom-color: var(--bs-border-color-translucent);
+  white-space: nowrap;
+}
+
+/* Badges ------------------------------------------------------------------ */
+.badge {
+  padding: 0.45em 0.7em;
+  border-radius: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   3. App shell (logged-in): sidebar + topbar
+   -------------------------------------------------------------------------- */
+.app-shell { min-height: 100vh; }
+
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--app-sidebar-width);
+  background: var(--bs-body-bg);
+  border-right: 1px solid var(--bs-border-color-translucent);
+  display: flex;
+  flex-direction: column;
+  z-index: 1045;
+  transition: transform 0.22s ease;
+}
+
+.app-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  font-size: 1.05rem;
+}
+
+.app-sidebar-nav {
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.app-sidebar-nav .nav-link,
+.app-sidebar-footer .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--bs-body-color);
+  border-radius: var(--app-radius-sm);
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.15rem;
+  font-weight: 500;
+}
+
+.app-sidebar-nav .nav-link i,
+.app-sidebar-footer .nav-link i { font-size: 1.1rem; }
+
+.app-sidebar-nav .nav-link:hover,
+.app-sidebar-footer .nav-link:hover {
+  background: var(--bs-secondary-bg);
+  color: var(--app-accent);
+}
+
+.app-sidebar-nav .nav-link.active,
+.app-sidebar-footer .nav-link.active {
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-weight: 600;
+}
+
+.app-sidebar-section {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bs-secondary-color);
+  padding: 0.9rem 0.75rem 0.35rem;
+}
+
+.app-sidebar-footer {
+  padding: 0.75rem;
+  border-top: 1px solid var(--bs-border-color-translucent);
+}
+
+.app-main {
+  margin-left: var(--app-sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-content {
+  flex-grow: 1;
+  padding: 1.5rem;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: color-mix(in srgb, var(--bs-body-bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.app-footer { color: var(--bs-secondary-color); }
+
+.btn-icon {
+  border: 0;
+  border-radius: 50%;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bs-body-color);
+  background: transparent;
+}
+.btn-icon:hover { background: var(--bs-secondary-bg); color: var(--app-accent); }
+
+.avatar-circle {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.role-badge { font-size: 0.68rem; }
+
+.notification-menu { width: min(320px, 90vw); }
+
+.notification-badge {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.1rem;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 0.25em 0.4em;
+}
+
+.app-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1040;
+}
+
+/* --------------------------------------------------------------------------
+   4. Public pages
+   -------------------------------------------------------------------------- */
+.public-navbar {
+  background: color-mix(in srgb, var(--bs-body-bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+.navbar-brand { font-weight: 800; letter-spacing: -0.02em; }
+
+.public-footer { color: var(--bs-secondary-color); }
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--app-radius);
+  background:
+    radial-gradient(1000px 400px at 100% -10%, rgba(var(--app-accent-rgb), 0.18), transparent 60%),
+    var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color-translucent);
+  padding: 3rem 2rem;
+}
+.landing-hero h1 { letter-spacing: -0.03em; font-weight: 800; }
+
+.section-title { font-weight: 800; letter-spacing: -0.02em; }
+.section-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--app-accent);
+}
+
+.service-icon,
+.stat-card-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+}
+
+.step-number {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: var(--app-accent);
+  color: #fff;
+}
+
+/* Legacy dashboard tiles still use this utility. */
+.dashboard-icon { font-size: 1.8rem; }
+
+.cta-band {
+  border-radius: var(--app-radius);
+  background: linear-gradient(135deg, var(--app-accent), color-mix(in srgb, var(--app-accent) 55%, black));
+  color: #fff;
+}
+.cta-band .btn-light { font-weight: 600; }
+
+/* --------------------------------------------------------------------------
+   5. Reusable components: stat cards, empty states, toasts, choices
+   -------------------------------------------------------------------------- */
+.stat-card-value { font-size: 1.65rem; font-weight: 800; line-height: 1.1; }
+.stat-card-label { font-size: 0.82rem; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--bs-secondary-color);
+}
+.empty-state-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  background: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+}
+
+.toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1090; }
+
+.accent-swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--sw, var(--app-accent));
+  padding: 0;
+}
+.accent-swatch.active {
+  box-shadow: 0 0 0 2px var(--bs-body-bg), 0 0 0 4px var(--sw, var(--app-accent));
+}
+
+.theme-choice,
+.accent-choice {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: var(--app-radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  height: 100%;
+}
+.theme-choice:hover,
+.accent-choice:hover { border-color: color-mix(in srgb, var(--app-accent) 50%, transparent); }
+.theme-choice:has(input:checked),
+.accent-choice:has(input:checked) {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--app-accent-rgb), 0.22);
+}
+.theme-choice input,
+.accent-choice input { position: absolute; opacity: 0; pointer-events: none; }
+.accent-dot {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.preview-panel { border: 1px dashed var(--bs-border-color); border-radius: var(--app-radius); }
+
+/* --------------------------------------------------------------------------
+   6. Responsive (mobile sidebar becomes an off-canvas drawer)
+   -------------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+  .app-sidebar { transform: translateX(-100%); box-shadow: var(--app-shadow); }
+  .app-sidebar.show { transform: translateX(0); }
+  .app-main { margin-left: 0; }
+  .app-content { padding: 1.1rem; }
+  .landing-hero { padding: 2rem 1.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-hover,
+  .app-sidebar { transition: none; }
+}

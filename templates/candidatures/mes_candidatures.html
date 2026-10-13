@@ -1,0 +1,57 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mes candidatures{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-1">Mes candidatures</h1>
+  <p class="text-muted mb-0">Suivez le statut de vos candidatures.</p>
+</div>
+
+{% if candidatures %}
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Offre</th>
+            <th>Type</th>
+            <th>Envoyée le</th>
+            <th>Statut</th>
+            <th class="text-end">CV</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for candidature in candidatures %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ candidature.offre.titre }}</div>
+                <div class="text-muted small">
+                  {{ candidature.offre.encadrant_pro.get_full_name|default:candidature.offre.encadrant_pro.username }}
+                </div>
+              </td>
+              <td>{{ candidature.offre.get_type_display }}</td>
+              <td class="text-muted small">{{ candidature.date_candidature|date:"d/m/Y" }}</td>
+              <td>
+                {% include "partials/_status_badge.html" with status=candidature.status label=candidature.get_status_display %}
+              </td>
+              <td class="text-end">
+                {% if candidature.cv %}
+                  <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-file-earmark-pdf"></i> CV
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  {% url 'offres:offre_list' as offres_url %}
+  <div class="card"><div class="card-body">
+    {% include "partials/_empty_state.html" with icon="file-earmark-text" title="Aucune candidature" text="Vous n'avez pas encore envoyé de candidature." action_url=offres_url action_label="Parcourir les offres" action_icon="search" %}
+  </div></div>
+{% endif %}
+{% endblock %}

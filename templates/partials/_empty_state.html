@@ -1,0 +1,20 @@
+{% comment %}
+Icon + message empty state.
+
+Usage:
+  {% with offre_url=... %}  -- or compute first with {% url 'x' as offre_url %}
+  {% include "partials/_empty_state.html" with icon="inbox" title="Aucune offre"
+             text="..." action_url=offre_url action_label="Parcourir les offres" %}
+{% endcomment %}
+<div class="empty-state">
+  <div class="empty-state-icon"><i class="bi bi-{{ icon|default:'inbox' }}"></i></div>
+  <div>
+    <h5 class="mb-1 text-body">{{ title|default:"Rien à afficher" }}</h5>
+    {% if text %}<p class="mb-0">{{ text }}</p>{% endif %}
+  </div>
+  {% if action_url %}
+    <a href="{{ action_url }}" class="btn btn-primary btn-sm">
+      {% if action_icon %}<i class="bi bi-{{ action_icon }} me-1"></i>{% endif %}{{ action_label|default:"Continuer" }}
+    </a>
+  {% endif %}
+</div>
