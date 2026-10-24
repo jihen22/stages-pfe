@@ -1,0 +1,82 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mes étudiants{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'accounts:dashboard_encadrant_acad' %}" class="btn btn-sm btn-link px-0 mb-2">
+    <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+  </a>
+  <h1 class="h3 mb-1">Mes étudiants</h1>
+  <p class="text-muted mb-0">Liste des étudiants que vous encadrez et suivi de leurs projets de fin d'études.</p>
+</div>
+
+{% if projets %}
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Étudiant</th>
+            <th>Sujet PFE</th>
+            <th>Entreprise / Offre</th>
+            <th class="text-center">Livrables</th>
+            <th>Statut</th>
+            <th>Date début</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for projet in projets %}
+            <tr>
+              <td>
+                <div class="fw-semibold">
+                  {{ projet.etudiant.get_full_name|default:projet.etudiant.username }}
+                </div>
+                <div class="text-muted small">
+                  {{ projet.etudiant.email|default:projet.etudiant.username }}
+                  {% if projet.etudiant.profil_etudiant.filiere %}
+                    &bull; {{ projet.etudiant.profil_etudiant.filiere }}
+                  {% endif %}
+                </div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ projet.sujet }}</div>
+                {% if projet.description %}
+                  <div class="text-muted small text-truncate" style="max-width: 320px;" title="{{ projet.description }}">
+                    {{ projet.description }}
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                {% if projet.offre %}
+                  <div class="fw-semibold small">{{ projet.offre.titre }}</div>
+                  <div class="text-muted small">
+                    <i class="bi bi-building me-1"></i>{{ projet.offre.encadrant_pro.get_full_name|default:projet.offre.encadrant_pro.username }}
+                  </div>
+                {% else %}
+                  <span class="text-muted small">Projet autonome</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <span class="badge rounded-pill text-bg-light border">
+                  <i class="bi bi-file-earmark-text me-1"></i>{{ projet.livrables.count }}
+                </span>
+              </td>
+              <td>
+                {% include "partials/_status_badge.html" with status=projet.status label=projet.get_status_display %}
+              </td>
+              <td class="text-muted small">{{ projet.date_creation|date:"d/m/Y" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card">
+    <div class="card-body">
+      {% include "partials/_empty_state.html" with icon="people" title="Aucun étudiant encadré" text="Aucun étudiant ne vous a encore été affecté pour le suivi de PFE." %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

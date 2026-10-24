@@ -1,0 +1,61 @@
+{% extends "base_app.html" %}
+
+{% block title %}Déposer un livrable{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <a href="{% url 'pfe:mon_pfe' %}" class="btn btn-sm btn-link px-0 mb-2">
+      <i class="bi bi-arrow-left"></i> Retour à mon PFE
+    </a>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <span class="badge text-bg-primary">Projet PFE</span>
+        <h1 class="h4 mt-2 mb-1">{{ projet.sujet }}</h1>
+        <p class="text-muted small mb-0">
+          <i class="bi bi-mortarboard me-1"></i>
+          Encadrant académique :
+          {% if projet.encadrant_acad %}
+            {{ projet.encadrant_acad.get_full_name|default:projet.encadrant_acad.username }}
+          {% else %}
+            <span class="text-warning">Non encore affecté</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <h2 class="h5 mb-3"><i class="bi bi-cloud-arrow-up me-1"></i> Nouveau livrable</h2>
+        <p class="text-muted small mb-4">
+          Déposez votre rapport d'avancement, rapport final ou tout document demandé par votre encadrant.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <div class="d-flex align-items-center gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-cloud-arrow-up me-1"></i> Déposer le livrable
+            </button>
+            <a href="{% url 'pfe:mon_pfe' %}" class="btn btn-outline-secondary">
+              Annuler
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base_app.html" %}
+
+{% block title %}Affectations{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'accounts:dashboard_admin' %}" class="btn btn-sm btn-link px-0 mb-2">
+    <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+  </a>
+  <h1 class="h3 mb-1">Affectations des encadrants</h1>
+  <p class="text-muted mb-0">Affectation des enseignants encadrants aux projets de fin d'études des étudiants.</p>
+</div>
+
+{% if projets %}
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Étudiant</th>
+            <th>Sujet PFE</th>
+            <th>Entreprise / Offre</th>
+            <th>Statut</th>
+            <th>Encadrant actuel</th>
+            <th style="min-width: 260px;">Affecter un encadrant</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for projet in projets %}
+            <tr>
+              <td>
+                <div class="fw-semibold">
+                  {{ projet.etudiant.get_full_name|default:projet.etudiant.username }}
+                </div>
+                <div class="text-muted small">{{ projet.etudiant.email|default:projet.etudiant.username }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ projet.sujet }}</div>
+                <div class="text-muted small">Créé le {{ projet.date_creation|date:"d/m/Y" }}</div>
+              </td>
+              <td>
+                {% if projet.offre %}
+                  <div class="fw-semibold small">{{ projet.offre.titre }}</div>
+                  <div class="text-muted small">
+                    <i class="bi bi-building me-1"></i>{{ projet.offre.encadrant_pro.get_full_name|default:projet.offre.encadrant_pro.username }}
+                  </div>
+                {% else %}
+                  <span class="text-muted small">Projet autonome</span>
+                {% endif %}
+              </td>
+              <td>
+                {% include "partials/_status_badge.html" with status=projet.status label=projet.get_status_display %}
+              </td>
+              <td>
+                {% if projet.encadrant_acad %}
+                  <span class="badge text-bg-info">
+                    <i class="bi bi-person-check me-1"></i>{{ projet.encadrant_acad.get_full_name|default:projet.encadrant_acad.username }}
+                  </span>
+                {% else %}
+                  <span class="badge text-bg-warning">Non affecté</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" action="{% url 'pfe:affecter_encadrant' projet.pk %}" class="d-flex align-items-center gap-2">
+                  {% csrf_token %}
+                  <select name="encadrant_acad" class="form-select form-select-sm" aria-label="Sélectionner l'encadrant">
+                    <option value="">-- Non affecté --</option>
+                    {% for enc in encadrants %}
+                      <option value="{{ enc.pk }}" {% if projet.encadrant_acad_id == enc.pk %}selected{% endif %}>
+                        {{ enc.get_full_name|default:enc.username }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                    <i class="bi bi-check-lg"></i> Enregistrer
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card">
+    <div class="card-body">
+      {% include "partials/_empty_state.html" with icon="diagram-3" title="Aucun projet PFE" text="Aucun projet de fin d'études n'a encore été enregistré." %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

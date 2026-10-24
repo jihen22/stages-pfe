@@ -1,0 +1,109 @@
+{% extends "base_app.html" %}
+
+{% block title %}Livrables à valider{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'accounts:dashboard_encadrant_acad' %}" class="btn btn-sm btn-link px-0 mb-2">
+    <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+  </a>
+  <h1 class="h3 mb-1">Livrables à valider</h1>
+  <p class="text-muted mb-0">Rapports et livrables déposés par vos étudiants en attente de votre validation.</p>
+</div>
+
+{% if livrables %}
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Livrable</th>
+            <th>Étudiant</th>
+            <th>Projet PFE</th>
+            <th>Déposé le</th>
+            <th class="text-center">Fichier</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for livrable in livrables %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ livrable.titre }}</div>
+                {% if livrable.commentaire %}
+                  <div class="text-muted small text-truncate" style="max-width: 250px;" title="{{ livrable.commentaire }}">
+                    {{ livrable.commentaire }}
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="fw-semibold">
+                  {{ livrable.projet.etudiant.get_full_name|default:livrable.projet.etudiant.username }}
+                </div>
+                <div class="text-muted small">{{ livrable.projet.etudiant.email }}</div>
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width: 260px;" title="{{ livrable.projet.sujet }}">
+                  {{ livrable.projet.sujet }}
+                </div>
+              </td>
+              <td class="text-muted small">{{ livrable.date_depot|date:"d/m/Y H:i" }}</td>
+              <td class="text-center">
+                {% if livrable.fichier %}
+                  <a href="{{ livrable.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Télécharger le fichier">
+                    <i class="bi bi-download"></i>
+                  </a>
+                {% endif %}
+              </td>
+              <td class="text-end text-nowrap">
+                <form method="post" action="{% url 'pfe:valider_livrable' livrable.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-success" title="Valider ce livrable">
+                    <i class="bi bi-check-lg me-1"></i> Valider
+                  </button>
+                </form>
+
+                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="collapse"
+                        data-bs-target="#corriger-{{ livrable.pk }}" title="Demander des corrections">
+                  <i class="bi bi-pencil-square me-1"></i> À corriger
+                </button>
+              </td>
+            </tr>
+
+            {# Expandable correction form row #}
+            <tr class="collapse" id="corriger-{{ livrable.pk }}">
+              <td colspan="6" class="bg-light p-3">
+                <form method="post" action="{% url 'pfe:corriger_livrable' livrable.pk %}">
+                  {% csrf_token %}
+                  <div class="mb-2">
+                    <label for="commentaire-{{ livrable.pk }}" class="form-label small fw-semibold text-warning-emphasis">
+                      <i class="bi bi-chat-left-text me-1"></i> Instructions / Remarques de correction pour l'étudiant :
+                    </label>
+                    <textarea name="commentaire_encadrant" id="commentaire-{{ livrable.pk }}" rows="2" class="form-control form-control-sm"
+                              placeholder="Indiquez à l'étudiant les modifications à apporter au document…"></textarea>
+                  </div>
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse"
+                            data-bs-target="#corriger-{{ livrable.pk }}">
+                      Annuler
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-warning">
+                      <i class="bi bi-send me-1"></i> Confirmer la demande de correction
+                    </button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card">
+    <div class="card-body">
+      {% include "partials/_empty_state.html" with icon="clipboard-check" title="Aucun livrable à valider" text="Tous les livrables déposés par vos étudiants ont été traités." %}
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

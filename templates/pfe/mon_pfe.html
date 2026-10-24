@@ -1,0 +1,171 @@
+{% extends "base_app.html" %}
+
+{% block title %}Mon PFE{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'accounts:dashboard_etudiant' %}" class="btn btn-sm btn-link px-0 mb-2">
+    <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+  </a>
+  <h1 class="h3 mb-1">Mon Projet de Fin d'Études</h1>
+  <p class="text-muted mb-0">Suivi de votre projet : sujet, encadrants et livrables.</p>
+</div>
+
+{% if projet %}
+  {# Project overview card #}
+  <div class="card mb-4">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <span class="text-muted small text-uppercase fw-semibold">Sujet du PFE</span>
+        <h2 class="h5 mb-0 mt-1">{{ projet.sujet }}</h2>
+      </div>
+      <div>
+        {% include "partials/_status_badge.html" with status=projet.status label=projet.get_status_display %}
+      </div>
+    </div>
+    <div class="card-body">
+      {% if projet.description %}
+        <div class="mb-3">
+          <h6 class="text-muted small text-uppercase">Description</h6>
+          <p class="mb-0 text-body" style="white-space: pre-line;">{{ projet.description }}</p>
+        </div>
+      {% endif %}
+
+      <div class="row g-3 pt-2 border-top">
+        <div class="col-sm-6 col-md-4">
+          <div class="text-muted small"><i class="bi bi-mortarboard me-1"></i> Encadrant académique</div>
+          <div class="fw-semibold">
+            {% if projet.encadrant_acad %}
+              {{ projet.encadrant_acad.get_full_name|default:projet.encadrant_acad.username }}
+            {% else %}
+              <span class="text-warning"><i class="bi bi-hourglass-split"></i> En attente d'affectation</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if projet.offre %}
+          <div class="col-sm-6 col-md-4">
+            <div class="text-muted small"><i class="bi bi-building me-1"></i> Entreprise / Encadrant pro</div>
+            <div class="fw-semibold">
+              {{ projet.offre.encadrant_pro.get_full_name|default:projet.offre.encadrant_pro.username }}
+            </div>
+            <div class="small text-muted">{{ projet.offre.titre }}</div>
+          </div>
+        {% endif %}
+
+        <div class="col-sm-6 col-md-4">
+          <div class="text-muted small"><i class="bi bi-calendar3 me-1"></i> Date d'enregistrement</div>
+          <div class="fw-semibold">{{ projet.date_creation|date:"d F Y" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Deliverables card #}
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h3 class="h5 mb-0"><i class="bi bi-files me-1"></i> Livrables déposés</h3>
+        <span class="text-muted small">Rapports et documents soumis à votre encadrant.</span>
+      </div>
+      <a href="{% url 'pfe:deposer_livrable' projet.pk %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-cloud-arrow-up me-1"></i> Déposer un livrable
+      </a>
+    </div>
+
+    {% if livrables %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Livrable</th>
+              <th>Déposé le</th>
+              <th>Statut</th>
+              <th>Remarques de l'encadrant</th>
+              <th class="text-end">Fichier</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for livrable in livrables %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ livrable.titre }}</div>
+                  {% if livrable.commentaire %}
+                    <div class="text-muted small text-truncate" style="max-width: 300px;" title="{{ livrable.commentaire }}">
+                      {{ livrable.commentaire }}
+                    </div>
+                  {% endif %}
+                </td>
+                <td class="text-muted small">{{ livrable.date_depot|date:"d/m/Y H:i" }}</td>
+                <td>
+                  {% include "partials/_status_badge.html" with status=livrable.status label=livrable.get_status_display %}
+                </td>
+                <td>
+                  {% if livrable.commentaire_encadrant %}
+                    <div class="small text-danger">
+                      <i class="bi bi-chat-left-dots me-1"></i>{{ livrable.commentaire_encadrant }}
+                    </div>
+                  {% else %}
+                    <span class="text-muted small">&mdash;</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if livrable.fichier %}
+                    <a href="{{ livrable.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                      <i class="bi bi-file-earmark-arrow-down me-1"></i> Télécharger
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {% url 'pfe:deposer_livrable' projet.pk as deposer_url %}
+      <div class="card-body">
+        {% include "partials/_empty_state.html" with icon="cloud-arrow-up" title="Aucun livrable déposé" text="Vous n'avez pas encore déposé de livrable pour votre PFE." action_url=deposer_url action_label="Déposer un livrable" action_icon="cloud-arrow-up" %}
+      </div>
+    {% endif %}
+  </div>
+
+{% else %}
+  {# No project yet #}
+  {% url 'offres:offre_list' as offres_url %}
+  <div class="card mb-4">
+    <div class="card-body">
+      {% include "partials/_empty_state.html" with icon="kanban" title="Aucun projet PFE en cours" text="Votre projet PFE sera créé automatiquement lorsqu'une entreprise acceptera votre candidature, ou vous pouvez déclarer votre sujet manuellement." action_url=offres_url action_label="Parcourir les offres" action_icon="search" %}
+    </div>
+  </div>
+
+  {% if form %}
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header fw-semibold">
+            <i class="bi bi-pencil-square me-1"></i> Déclarer un sujet de PFE
+          </div>
+          <div class="card-body p-4">
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {% for field in form %}
+                <div class="mb-3">
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                  {% for error in field.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i> Enregistrer mon projet
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+{% endblock %}
