@@ -1,0 +1,125 @@
+{% extends "base_app.html" %}
+
+{% block title %}Saisir la note — Soutenance{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h1 class="h3 mb-1">Évaluation de soutenance</h1>
+    <p class="text-muted mb-0">Saisie de la note et des appréciations pour le projet de fin d'études.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'soutenances:saisir_notes' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Liste des notes
+    </a>
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-speedometer2 me-1"></i> Tableau de bord
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Informations sur le projet et l'étudiant -->
+  <div class="col-lg-5">
+    <div class="card mb-4">
+      <div class="card-header bg-transparent fw-semibold">
+        <i class="bi bi-person-lines-fill me-1"></i> Informations sur le PFE
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="text-muted small d-block">Étudiant</span>
+          <span class="fw-semibold fs-6">
+            {{ soutenance.projet.etudiant.get_full_name|default:soutenance.projet.etudiant.username }}
+          </span>
+          {% if soutenance.projet.etudiant.email %}
+            <div class="text-muted small">{{ soutenance.projet.etudiant.email }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <span class="text-muted small d-block">Sujet du projet</span>
+          <div class="fw-semibold">{{ soutenance.projet.sujet }}</div>
+        </div>
+
+        {% if soutenance.projet.encadrant_acad %}
+          <div class="mb-3">
+            <span class="text-muted small d-block">Encadrant académique</span>
+            <div>{{ soutenance.projet.encadrant_acad.get_full_name|default:soutenance.projet.encadrant_acad.username }}</div>
+          </div>
+        {% endif %}
+
+        <div class="p-3 border rounded bg-body-tertiary">
+          <div class="row g-2">
+            <div class="col-6">
+              <span class="text-muted small d-block"><i class="bi bi-calendar-event me-1"></i>Date</span>
+              <span class="fw-semibold">{{ soutenance.date|date:"d/m/Y H:i" }}</span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted small d-block"><i class="bi bi-geo-alt me-1"></i>Salle</span>
+              <span class="fw-semibold">{{ soutenance.salle }}</span>
+            </div>
+          </div>
+        </div>
+
+        {% if note_obj and note_obj.date_saisie %}
+          <div class="mt-3 text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            Dernière saisie enregistrée le {{ note_obj.date_saisie|date:"d/m/Y à H:i" }}.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de saisie de la note -->
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header bg-transparent fw-semibold">
+        <i class="bi bi-pencil-square me-1"></i> Grille d'évaluation
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="{{ form.note.id_for_label }}" class="form-label fw-semibold">
+              {{ form.note.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.note }}
+            <div class="form-text">Attribuez une note comprise entre 0.00 et 20.00 (ex. : 15.5).</div>
+            {% if form.note.errors %}
+              <div class="invalid-feedback d-block">{{ form.note.errors|first }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label for="{{ form.remarque.id_for_label }}" class="form-label fw-semibold">
+              {{ form.remarque.label }}
+            </label>
+            {{ form.remarque }}
+            <div class="form-text">Commentaires, appréciations du jury ou points d'amélioration (facultatif).</div>
+            {% if form.remarque.errors %}
+              <div class="invalid-feedback d-block">{{ form.remarque.errors|first }}</div>
+            {% endif %}
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{% url 'soutenances:saisir_notes' %}" class="btn btn-outline-secondary">
+              Annuler
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i> Enregistrer l'évaluation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
