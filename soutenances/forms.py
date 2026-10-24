@@ -39,6 +39,7 @@ class SoutenanceForm(BootstrapFormMixin, forms.ModelForm):
             pass
 
         self.fields['jury'].queryset = User.objects.filter(role=User.Role.JURY)
+        self.fields['jury'].required = True
         self.fields['date'].input_formats = [
             '%Y-%m-%dT%H:%M',
             '%Y-%m-%dT%H:%M:%S',
