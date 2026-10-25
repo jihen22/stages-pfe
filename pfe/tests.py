@@ -29,6 +29,9 @@ class PfeBaseTestCase(TestCase):
         cls.etudiant_sans_projet = User.objects.create_user(
             username='etudiant3', password='demo1234', role=User.Role.ETUDIANT,
         )
+        cls.etudiant_en_attente = User.objects.create_user(
+            username='etudiant4', password='demo1234', role=User.Role.ETUDIANT,
+        )
         cls.encadrant_acad = User.objects.create_user(
             username='acad', password='demo1234', role=User.Role.ENCADRANT_ACAD,
         )
@@ -60,6 +63,10 @@ class PfeBaseTestCase(TestCase):
             encadrant_acad=cls.autre_encadrant_acad,
             sujet='Application mobile Flutter',
         )
+        cls.projet_en_attente = ProjetPFE.objects.create(
+            etudiant=cls.etudiant_en_attente,
+            sujet="Sujet en attente d'un encadrant",
+        )
         cls.livrable = Livrable.objects.create(
             projet=cls.projet,
             titre='Rapport d\'avancement',
@@ -87,8 +94,8 @@ class PfeRoleAccessTests(PfeBaseTestCase):
         self.assertEqual(self.client.get(reverse('pfe:mes_etudiants')).status_code, 403)
         self.assertEqual(self.client.get(reverse('pfe:livrables_a_valider')).status_code, 403)
 
-    def test_affectations_is_admin_only(self):
-        self.client.force_login(self.encadrant_acad)
+    def test_affectations_is_academic_only(self):
+        self.client.force_login(self.admin)
         self.assertEqual(self.client.get(reverse('pfe:affectations')).status_code, 403)
 
     def test_review_actions_require_post(self):
@@ -225,36 +232,132 @@ class DeliverableReviewTests(PfeBaseTestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class SupervisorAssignmentTests(PfeBaseTestCase):
-    def test_admin_can_assign_a_supervisor(self):
-        self.projet.encadrant_acad = None
-        self.projet.save(update_fields=['encadrant_acad'])
+class ProjectClaimTests(PfeBaseTestCase):
+    def test_page_lists_only_unassigned_projects(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.get(reverse('pfe:affectations'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.projet_en_attente, response.context['disponibles'])
+        self.assertNotIn(self.projet, response.context['disponibles'])
+        self.assertNotIn(self.projet_autre, response.context['disponibles'])
+        self.assertIn(self.projet, response.context['mes_projets'])
+        self.assertNotIn(self.projet_en_attente, response.context['mes_projets'])
 
-        self.client.force_login(self.admin)
+    def test_supervisor_can_claim_an_unassigned_project(self):
+        self.client.force_login(self.encadrant_acad)
         response = self.client.post(
-            reverse('pfe:affecter_encadrant', args=[self.projet.pk]),
-            {'encadrant_acad': self.encadrant_acad.pk},
+            reverse('pfe:prendre_en_charge', args=[self.projet_en_attente.pk]),
+        )
+        self.assertRedirects(response, reverse('pfe:affectations'))
+
+        self.projet_en_attente.refresh_from_db()
+        self.assertEqual(self.projet_en_attente.encadrant_acad, self.encadrant_acad)
+        self.assertTrue(
+            Notification.objects.filter(user=self.etudiant_en_attente).exists()
+        )
+
+    def test_a_project_cannot_be_claimed_by_two_supervisors(self):
+        self.client.force_login(self.autre_encadrant_acad)
+        self.client.post(
+            reverse('pfe:prendre_en_charge', args=[self.projet.pk]),
+        )
+        self.projet.refresh_from_db()
+        self.assertEqual(self.projet.encadrant_acad, self.encadrant_acad)
+
+    def test_claiming_your_own_project_is_harmless(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.post(
+            reverse('pfe:prendre_en_charge', args=[self.projet.pk]),
+        )
+        self.assertRedirects(response, reverse('pfe:affectations'))
+        self.projet.refresh_from_db()
+        self.assertEqual(self.projet.encadrant_acad, self.encadrant_acad)
+
+    def test_supervisor_can_release_their_own_project(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.post(
+            reverse('pfe:liberer_projet', args=[self.projet.pk]),
         )
         self.assertRedirects(response, reverse('pfe:affectations'))
 
         self.projet.refresh_from_db()
-        self.assertEqual(self.projet.encadrant_acad, self.encadrant_acad)
-        self.assertTrue(Notification.objects.filter(user=self.encadrant_acad).exists())
+        self.assertIsNone(self.projet.encadrant_acad)
         self.assertTrue(Notification.objects.filter(user=self.etudiant).exists())
 
-    def test_admin_can_remove_a_supervisor(self):
-        self.client.force_login(self.admin)
-        self.client.post(
-            reverse('pfe:affecter_encadrant', args=[self.projet.pk]),
-            {'encadrant_acad': ''},
-        )
-        self.projet.refresh_from_db()
-        self.assertIsNone(self.projet.encadrant_acad)
-
-    def test_assignment_is_admin_only(self):
-        self.client.force_login(self.encadrant_acad)
+    def test_cannot_release_another_supervisors_project(self):
+        self.client.force_login(self.autre_encadrant_acad)
         response = self.client.post(
-            reverse('pfe:affecter_encadrant', args=[self.projet.pk]),
-            {'encadrant_acad': self.encadrant_acad.pk},
+            reverse('pfe:liberer_projet', args=[self.projet.pk]),
+        )
+        self.assertEqual(response.status_code, 404)
+
+        self.projet.refresh_from_db()
+        self.assertEqual(self.projet.encadrant_acad, self.encadrant_acad)
+
+    def test_claim_actions_require_post(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.get(
+            reverse('pfe:prendre_en_charge', args=[self.projet_en_attente.pk]),
+        )
+        self.assertEqual(response.status_code, 405)
+
+    def test_page_is_forbidden_to_other_roles(self):
+        for user in (self.admin, self.etudiant, self.encadrant_pro):
+            with self.subTest(role=user.role):
+                self.client.force_login(user)
+                self.assertEqual(
+                    self.client.get(reverse('pfe:affectations')).status_code, 403,
+                )
+
+    def test_admin_cannot_claim_a_project(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse('pfe:prendre_en_charge', args=[self.projet_en_attente.pk]),
         )
         self.assertEqual(response.status_code, 403)
+
+        self.projet_en_attente.refresh_from_db()
+        self.assertIsNone(self.projet_en_attente.encadrant_acad)
+
+
+class SupervisorProjectCreationTests(PfeBaseTestCase):
+    def test_supervisor_can_create_a_project_for_a_student(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.post(reverse('pfe:creer_projet_encadrant'), {
+            'etudiant': self.etudiant_sans_projet.pk,
+            'offre': self.offre.pk,
+            'sujet': "Sujet proposé par l'encadrant",
+            'description': 'Description du sujet.',
+        })
+        self.assertRedirects(response, reverse('pfe:affectations'))
+
+        projet = ProjetPFE.objects.get(etudiant=self.etudiant_sans_projet)
+        self.assertEqual(projet.sujet, "Sujet proposé par l'encadrant")
+        self.assertEqual(projet.encadrant_acad, self.encadrant_acad)
+        self.assertEqual(projet.offre, self.offre)
+        self.assertTrue(
+            Notification.objects.filter(user=self.etudiant_sans_projet).exists()
+        )
+
+    def test_students_with_a_project_are_not_offered(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.get(reverse('pfe:creer_projet_encadrant'))
+        etudiants = response.context['form'].fields['etudiant'].queryset
+        self.assertIn(self.etudiant_sans_projet, etudiants)
+        self.assertNotIn(self.etudiant, etudiants)
+
+    def test_cannot_create_a_second_project_for_the_same_student(self):
+        self.client.force_login(self.encadrant_acad)
+        response = self.client.post(reverse('pfe:creer_projet_encadrant'), {
+            'etudiant': self.etudiant.pk,
+            'sujet': 'Doublon',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('etudiant', response.context['form'].errors)
+        self.assertEqual(ProjetPFE.objects.filter(etudiant=self.etudiant).count(), 1)
+
+    def test_creation_is_academic_only(self):
+        self.client.force_login(self.admin)
+        self.assertEqual(
+            self.client.get(reverse('pfe:creer_projet_encadrant')).status_code, 403,
+        )

@@ -54,6 +54,9 @@
 
       {% elif user.role == 'ENCADRANT_ACAD' %}
         <div class="app-sidebar-section">Encadrement</div>
+        <a class="nav-link {% if rn == 'affectations' or rn == 'creer_projet_encadrant' %}active{% endif %}" href="{% url 'pfe:affectations' %}">
+          <i class="bi bi-diagram-3"></i> Projets à encadrer
+        </a>
         <a class="nav-link {% if rn == 'mes_etudiants' %}active{% endif %}" href="{% url 'pfe:mes_etudiants' %}">
           <i class="bi bi-people"></i> Mes étudiants
         </a>
@@ -65,9 +68,6 @@
         <div class="app-sidebar-section">Pilotage</div>
         <a class="nav-link {% if rn == 'offres_a_valider' %}active{% endif %}" href="{% url 'offres:offres_a_valider' %}">
           <i class="bi bi-patch-check"></i> Offres à valider
-        </a>
-        <a class="nav-link {% if rn == 'affectations' %}active{% endif %}" href="{% url 'pfe:affectations' %}">
-          <i class="bi bi-diagram-3"></i> Affectations
         </a>
         <a class="nav-link {% if rn == 'planning' %}active{% endif %}" href="{% url 'soutenances:planning' %}">
           <i class="bi bi-calendar3"></i> Planning soutenances

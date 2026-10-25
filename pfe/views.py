@@ -8,7 +8,7 @@ from accounts.models import User
 from candidatures.models import Candidature
 from notifications.services import notify
 
-from .forms import LivrableForm, ProjetPFEForm
+from .forms import LivrableForm, ProjetEncadrantForm, ProjetPFEForm
 from .models import Livrable, ProjetPFE
 
 
@@ -191,52 +191,101 @@ def corriger_livrable(request, pk):
 
 
 # ---------------------------------------------------------------------------
-# Administration views
+# Academic supervisor views: taking charge of projects
 # ---------------------------------------------------------------------------
 
-@role_required(User.Role.ADMIN)
+@role_required(User.Role.ENCADRANT_ACAD)
 def affectations(request):
-    """List all PFE projects and allow assigning academic supervisors."""
-    projets = (
-        ProjetPFE.objects.select_related('etudiant', 'encadrant_acad', 'offre', 'offre__encadrant_pro')
+    """List projects waiting for a supervisor and the ones this supervisor already runs."""
+    related = ('etudiant', 'offre', 'offre__encadrant_pro')
+    disponibles = (
+        ProjetPFE.objects.filter(encadrant_acad__isnull=True)
+        .select_related(*related)
         .order_by('-date_creation')
     )
-    encadrants = User.objects.filter(role=User.Role.ENCADRANT_ACAD).order_by('last_name', 'first_name', 'username')
+    mes_projets = (
+        ProjetPFE.objects.filter(encadrant_acad=request.user)
+        .select_related(*related)
+        .order_by('-date_creation')
+    )
     return render(request, 'pfe/affectations.html', {
-        'projets': projets,
-        'encadrants': encadrants,
+        'disponibles': disponibles,
+        'mes_projets': mes_projets,
     })
 
 
-@role_required(User.Role.ADMIN)
+@role_required(User.Role.ENCADRANT_ACAD)
 @require_POST
-def affecter_encadrant(request, pk):
-    """Assign or reassign an academic supervisor to a PFE project."""
-    projet = get_object_or_404(ProjetPFE, pk=pk)
-    encadrant_id = request.POST.get('encadrant_acad', '').strip()
+def prendre_en_charge(request, pk):
+    """Assign the current supervisor to an unassigned project (atomic claim)."""
+    projet = get_object_or_404(ProjetPFE.objects.select_related('etudiant'), pk=pk)
 
-    if encadrant_id:
-        encadrant = get_object_or_404(User, pk=encadrant_id, role=User.Role.ENCADRANT_ACAD)
-        projet.encadrant_acad = encadrant
-        projet.save(update_fields=['encadrant_acad'])
+    claimed = ProjetPFE.objects.filter(pk=pk, encadrant_acad__isnull=True).update(
+        encadrant_acad=request.user,
+    )
+    if not claimed:
+        if projet.encadrant_acad_id == request.user.pk:
+            messages.info(request, "Vous encadrez déjà ce projet.")
+        else:
+            messages.error(
+                request,
+                "Ce projet a déjà été pris en charge par un autre encadrant.",
+            )
+        return redirect('pfe:affectations')
 
-        student_name = projet.etudiant.get_full_name() or projet.etudiant.username
-        supervisor_name = encadrant.get_full_name() or encadrant.username
-
-        notify(
-            encadrant,
-            f"Vous avez été affecté à l'encadrement du PFE « {projet.sujet} » ({student_name}).",
-            reverse('pfe:mes_etudiants'),
-        )
-        notify(
-            projet.etudiant,
-            f"Votre encadrant académique a été désigné : {supervisor_name}.",
-            reverse('pfe:mon_pfe'),
-        )
-        messages.success(request, f"L'étudiant {student_name} a été affecté à {supervisor_name}.")
-    else:
-        projet.encadrant_acad = None
-        projet.save(update_fields=['encadrant_acad'])
-        messages.info(request, f"L'affectation de l'encadrant pour « {projet.sujet} » a été retirée.")
-
+    supervisor_name = request.user.get_full_name() or request.user.username
+    notify(
+        projet.etudiant,
+        f"Votre encadrant académique a été désigné : {supervisor_name}.",
+        reverse('pfe:mon_pfe'),
+    )
+    messages.success(request, f"Vous encadrez désormais le projet « {projet.sujet} ».")
     return redirect('pfe:affectations')
+
+
+@role_required(User.Role.ENCADRANT_ACAD)
+@require_POST
+def liberer_projet(request, pk):
+    """Put one of the supervisor's own projects back into the unassigned pool."""
+    projet = get_object_or_404(
+        ProjetPFE.objects.select_related('etudiant'),
+        pk=pk,
+        encadrant_acad=request.user,
+    )
+    ProjetPFE.objects.filter(pk=pk, encadrant_acad=request.user).update(encadrant_acad=None)
+
+    notify(
+        projet.etudiant,
+        f"Votre projet « {projet.sujet} » est de nouveau en attente d'un encadrant académique.",
+        reverse('pfe:mon_pfe'),
+    )
+    messages.info(request, f"Le projet « {projet.sujet} » a été retiré de votre encadrement.")
+    return redirect('pfe:affectations')
+
+
+@role_required(User.Role.ENCADRANT_ACAD)
+def creer_projet_encadrant(request):
+    """Create a PFE project for a student who does not have one yet."""
+    if request.method == 'POST':
+        form = ProjetEncadrantForm(request.POST)
+        if form.is_valid():
+            projet = form.save(commit=False)
+            projet.encadrant_acad = request.user
+            projet.save()
+
+            supervisor_name = request.user.get_full_name() or request.user.username
+            notify(
+                projet.etudiant,
+                f"Un projet PFE vous a été assigné par {supervisor_name} : « {projet.sujet} ».",
+                reverse('pfe:mon_pfe'),
+            )
+            student_name = projet.etudiant.get_full_name() or projet.etudiant.username
+            messages.success(
+                request,
+                f"Le projet « {projet.sujet} » a été créé pour {student_name}.",
+            )
+            return redirect('pfe:affectations')
+    else:
+        form = ProjetEncadrantForm()
+
+    return render(request, 'pfe/projet_form.html', {'form': form})

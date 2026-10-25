@@ -5,10 +5,21 @@
 {% block content %}
 <div class="mb-4">
   <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }}</h1>
-  <p class="text-muted mb-0">Espace encadrant académique — suivez vos étudiants et validez leurs livrables.</p>
+  <p class="text-muted mb-0">Espace encadrant académique — prenez en charge des projets, suivez vos étudiants et validez leurs livrables.</p>
 </div>
 
 <div class="row g-3">
+  <div class="col-md-6 col-lg-4">
+    <div class="card card-hover h-100"><div class="card-body">
+      <div class="dashboard-icon text-warning"><i class="bi bi-diagram-3"></i></div>
+      <h5 class="card-title mt-2">Projets à encadrer</h5>
+      <p class="card-text text-muted">
+        {{ projets_disponibles }} projet{{ projets_disponibles|pluralize }} en attente d'un encadrant.
+      </p>
+      <a href="{% url 'pfe:affectations' %}" class="btn btn-warning btn-sm">Voir les projets</a>
+    </div></div>
+  </div>
+
   <div class="col-md-6 col-lg-4">
     <div class="card card-hover h-100"><div class="card-body">
       <div class="dashboard-icon text-primary"><i class="bi bi-people"></i></div>

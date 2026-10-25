@@ -90,12 +90,13 @@ class PageSmokeTests(TestCase):
             'offres:offre_create', 'candidatures:candidatures_recues', 'notifications:list',
         ],
         User.Role.ENCADRANT_ACAD: [
-            'accounts:dashboard_encadrant_acad', 'pfe:mes_etudiants', 'pfe:livrables_a_valider',
+            'accounts:dashboard_encadrant_acad', 'pfe:affectations',
+            'pfe:creer_projet_encadrant', 'pfe:mes_etudiants', 'pfe:livrables_a_valider',
             'notifications:list',
         ],
         User.Role.ADMIN: [
             'accounts:dashboard_admin', 'offres:offres_a_valider',
-            'pfe:affectations', 'soutenances:planning', 'notifications:list',
+            'soutenances:planning', 'notifications:list',
         ],
         User.Role.JURY: [
             'accounts:dashboard_jury', 'soutenances:mes_soutenances', 'soutenances:saisir_notes',

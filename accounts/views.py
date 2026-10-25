@@ -9,6 +9,7 @@ from django.views.generic import CreateView
 
 from candidatures.models import Candidature
 from offres.models import Offre
+from pfe.models import ProjetPFE
 
 from .forms import BootstrapAuthenticationForm, ProfilEtudiantForm, StudentRegistrationForm
 from .mixins import role_required
@@ -102,7 +103,10 @@ def dashboard_encadrant_pro(request):
 
 @role_required(User.Role.ENCADRANT_ACAD)
 def dashboard_encadrant_acad(request):
-    return render(request, 'accounts/dashboards/encadrant_acad.html')
+    context = {
+        'projets_disponibles': ProjetPFE.objects.filter(encadrant_acad__isnull=True).count(),
+    }
+    return render(request, 'accounts/dashboards/encadrant_acad.html', context)
 
 
 @role_required(User.Role.ADMIN)

@@ -12,5 +12,7 @@ urlpatterns = [
     path('livrables/<int:pk>/valider/', views.valider_livrable, name='valider_livrable'),
     path('livrables/<int:pk>/corriger/', views.corriger_livrable, name='corriger_livrable'),
     path('affectations/', views.affectations, name='affectations'),
-    path('affectations/<int:pk>/', views.affecter_encadrant, name='affecter_encadrant'),
+    path('affectations/creer/', views.creer_projet_encadrant, name='creer_projet_encadrant'),
+    path('affectations/<int:pk>/prendre/', views.prendre_en_charge, name='prendre_en_charge'),
+    path('affectations/<int:pk>/liberer/', views.liberer_projet, name='liberer_projet'),
 ]

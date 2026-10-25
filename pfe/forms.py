@@ -2,6 +2,7 @@ from django import forms
 
 from accounts.forms import BootstrapFormMixin
 from accounts.models import User
+from offres.models import Offre
 
 from .models import Livrable, ProjetPFE
 
@@ -28,15 +29,37 @@ class LivrableForm(BootstrapFormMixin, forms.ModelForm):
         }
 
 
-class AffectationForm(BootstrapFormMixin, forms.ModelForm):
-    """Form for administration to assign an academic supervisor to a PFE project."""
+class ProjetEncadrantForm(BootstrapFormMixin, forms.ModelForm):
+    """Form for an academic supervisor to create a PFE project for a student."""
+
+    etudiant = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        label='Étudiant',
+        empty_label='-- Sélectionner un étudiant --',
+    )
 
     class Meta:
         model = ProjetPFE
-        fields = ('encadrant_acad',)
+        fields = ('etudiant', 'offre', 'sujet', 'description')
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Objectifs, périmètre et contexte du projet…'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['encadrant_acad'].queryset = User.objects.filter(role=User.Role.ENCADRANT_ACAD)
-        self.fields['encadrant_acad'].empty_label = '-- Non affecté --'
-        self.fields['encadrant_acad'].required = False
+        # Only students who do not already have a PFE project can be assigned one.
+        self.fields['etudiant'].queryset = User.objects.filter(
+            role=User.Role.ETUDIANT,
+            projets_pfe__isnull=True,
+        ).order_by('last_name', 'first_name', 'username')
+        self.fields['offre'].queryset = Offre.objects.filter(
+            type=Offre.Type.PFE,
+            status=Offre.Status.PUBLIEE,
+        ).order_by('titre')
+        self.fields['offre'].required = False
+
+    def clean_etudiant(self):
+        etudiant = self.cleaned_data['etudiant']
+        if ProjetPFE.objects.filter(etudiant=etudiant).exists():
+            raise forms.ValidationError('Cet étudiant a déjà un projet PFE.')
+        return etudiant
