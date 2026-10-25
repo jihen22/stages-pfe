@@ -8,8 +8,49 @@ from accounts.models import User
 from candidatures.models import Candidature
 from notifications.services import notify
 
-from .forms import AffectationForm, LivrableForm, ProjetPFEForm
+from .forms import LivrableForm, ProjetPFEForm
 from .models import Livrable, ProjetPFE
+
+
+# ---------------------------------------------------------------------------
+# Deliverable review helpers (shared by the list and action views)
+# ---------------------------------------------------------------------------
+
+def _valider_livrable(request, livrable):
+    """Mark a deliverable as validated, save the optional comment and notify the student."""
+    commentaire = request.POST.get('commentaire_encadrant', '').strip()
+    livrable.status = Livrable.Status.VALIDE
+    fields = ['status']
+    if commentaire:
+        livrable.commentaire_encadrant = commentaire
+        fields.append('commentaire_encadrant')
+    livrable.save(update_fields=fields)
+
+    notify(
+        livrable.projet.etudiant,
+        f"Votre livrable « {livrable.titre} » a été validé.",
+        reverse('pfe:mon_pfe'),
+    )
+    messages.success(request, f"Le livrable « {livrable.titre} » a été validé.")
+
+
+def _demander_corrections(request, livrable):
+    """Ask the student for corrections, save the optional comment and notify them."""
+    commentaire = request.POST.get('commentaire_encadrant', '').strip()
+    livrable.status = Livrable.Status.A_CORRIGER
+    fields = ['status']
+    if commentaire:
+        livrable.commentaire_encadrant = commentaire
+        fields.append('commentaire_encadrant')
+    livrable.save(update_fields=fields)
+
+    suffix = f" Remarque : {commentaire}" if commentaire else ""
+    notify(
+        livrable.projet.etudiant,
+        f"Des corrections ont été demandées pour le livrable « {livrable.titre} ».{suffix}",
+        reverse('pfe:mon_pfe'),
+    )
+    messages.warning(request, f"Des corrections ont été demandées pour « {livrable.titre} ».")
 
 
 # ---------------------------------------------------------------------------
@@ -25,35 +66,43 @@ def mon_pfe(request):
         .first()
     )
 
-    if not projet:
-        # Check if the student has an accepted candidature to auto-create the project
-        accepted_cand = (
-            Candidature.objects.filter(etudiant=request.user, status=Candidature.Status.ACCEPTEE)
-            .select_related('offre')
-            .first()
-        )
-        if accepted_cand:
-            projet = ProjetPFE.objects.create(
-                etudiant=request.user,
-                offre=accepted_cand.offre,
-                sujet=accepted_cand.offre.titre,
-                description=accepted_cand.offre.description,
-            )
-            messages.info(request, 'Votre projet PFE a été initialisé depuis votre candidature acceptée.')
-        elif request.method == 'POST':
-            form = ProjetPFEForm(request.POST)
-            if form.is_valid():
-                projet = form.save(commit=False)
-                projet.etudiant = request.user
-                projet.save()
-                messages.success(request, 'Votre projet PFE a été créé avec succès.')
-                return redirect('pfe:mon_pfe')
-        else:
-            form = ProjetPFEForm()
-            return render(request, 'pfe/mon_pfe.html', {'projet': None, 'form': form})
+    if projet:
+        return render(request, 'pfe/mon_pfe.html', {
+            'projet': projet,
+            'livrables': projet.livrables.all(),
+        })
 
-    livrables = projet.livrables.all()
-    return render(request, 'pfe/mon_pfe.html', {'projet': projet, 'livrables': livrables})
+    # Check if the student has an accepted candidature to auto-create the project
+    accepted_cand = (
+        Candidature.objects.filter(etudiant=request.user, status=Candidature.Status.ACCEPTEE)
+        .select_related('offre')
+        .first()
+    )
+    if accepted_cand:
+        projet = ProjetPFE.objects.create(
+            etudiant=request.user,
+            offre=accepted_cand.offre,
+            sujet=accepted_cand.offre.titre,
+            description=accepted_cand.offre.description,
+        )
+        messages.info(request, 'Votre projet PFE a été initialisé depuis votre candidature acceptée.')
+        return render(request, 'pfe/mon_pfe.html', {
+            'projet': projet,
+            'livrables': projet.livrables.all(),
+        })
+
+    if request.method == 'POST':
+        form = ProjetPFEForm(request.POST)
+        if form.is_valid():
+            projet = form.save(commit=False)
+            projet.etudiant = request.user
+            projet.save()
+            messages.success(request, 'Votre projet PFE a été créé avec succès.')
+            return redirect('pfe:mon_pfe')
+    else:
+        form = ProjetPFEForm()
+
+    return render(request, 'pfe/mon_pfe.html', {'projet': None, 'form': form})
 
 
 @role_required(User.Role.ETUDIANT)
@@ -110,29 +159,9 @@ def livrables_a_valider(request):
         if livrable_id and action in ('valider', 'corriger'):
             livrable = get_object_or_404(Livrable, pk=livrable_id, projet__encadrant_acad=request.user)
             if action == 'valider':
-                livrable.status = Livrable.Status.VALIDE
-                livrable.save(update_fields=['status'])
-                notify(
-                    livrable.projet.etudiant,
-                    f"Votre livrable « {livrable.titre} » a été validé.",
-                    reverse('pfe:mon_pfe'),
-                )
-                messages.success(request, f"Le livrable « {livrable.titre} » a été validé.")
-            elif action == 'corriger':
-                livrable.status = Livrable.Status.A_CORRIGER
-                commentaire = request.POST.get('commentaire_encadrant', '').strip()
-                if commentaire:
-                    livrable.commentaire_encadrant = commentaire
-                    livrable.save(update_fields=['status', 'commentaire_encadrant'])
-                else:
-                    livrable.save(update_fields=['status'])
-                msg_suffix = f" Remarque : {commentaire}" if commentaire else ""
-                notify(
-                    livrable.projet.etudiant,
-                    f"Des corrections ont été demandées pour le livrable « {livrable.titre} ».{msg_suffix}",
-                    reverse('pfe:mon_pfe'),
-                )
-                messages.warning(request, f"Des corrections ont été demandées pour « {livrable.titre} ».")
+                _valider_livrable(request, livrable)
+            else:
+                _demander_corrections(request, livrable)
             return redirect('pfe:livrables_a_valider')
 
     livrables = (
@@ -148,20 +177,7 @@ def livrables_a_valider(request):
 def valider_livrable(request, pk):
     """Validate a student's deliverable."""
     livrable = get_object_or_404(Livrable, pk=pk, projet__encadrant_acad=request.user)
-    livrable.status = Livrable.Status.VALIDE
-    commentaire = request.POST.get('commentaire_encadrant', '').strip()
-    if commentaire:
-        livrable.commentaire_encadrant = commentaire
-        livrable.save(update_fields=['status', 'commentaire_encadrant'])
-    else:
-        livrable.save(update_fields=['status'])
-
-    notify(
-        livrable.projet.etudiant,
-        f"Votre livrable « {livrable.titre} » a été validé.",
-        reverse('pfe:mon_pfe'),
-    )
-    messages.success(request, f"Le livrable « {livrable.titre} » a été validé.")
+    _valider_livrable(request, livrable)
     return redirect('pfe:livrables_a_valider')
 
 
@@ -170,21 +186,7 @@ def valider_livrable(request, pk):
 def corriger_livrable(request, pk):
     """Request corrections on a student's deliverable."""
     livrable = get_object_or_404(Livrable, pk=pk, projet__encadrant_acad=request.user)
-    livrable.status = Livrable.Status.A_CORRIGER
-    commentaire = request.POST.get('commentaire_encadrant', '').strip()
-    if commentaire:
-        livrable.commentaire_encadrant = commentaire
-        livrable.save(update_fields=['status', 'commentaire_encadrant'])
-    else:
-        livrable.save(update_fields=['status'])
-
-    msg_suffix = f" Remarque : {commentaire}" if commentaire else ""
-    notify(
-        livrable.projet.etudiant,
-        f"Des corrections ont été demandées pour le livrable « {livrable.titre} ».{msg_suffix}",
-        reverse('pfe:mon_pfe'),
-    )
-    messages.warning(request, f"Des corrections ont été demandées pour « {livrable.titre} ».")
+    _demander_corrections(request, livrable)
     return redirect('pfe:livrables_a_valider')
 
 

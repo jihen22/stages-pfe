@@ -10,6 +10,26 @@ from .forms import NoteSoutenanceForm, SoutenanceForm
 from .models import NoteSoutenance, Soutenance
 
 
+def _notify_soutenance(soutenance):
+    """Notify the student and every jury member about a newly scheduled defense."""
+    date_str = soutenance.date.strftime('%d/%m/%Y à %H:%M')
+
+    etudiant = getattr(soutenance.projet, 'etudiant', None)
+    if etudiant:
+        notify(
+            etudiant,
+            f"Votre soutenance pour le PFE « {soutenance.projet.sujet} » a été planifiée le {date_str} en salle {soutenance.salle}.",
+            reverse('soutenances:ma_soutenance'),
+        )
+
+    for member in soutenance.jury.all():
+        notify(
+            member,
+            f"Vous avez été désigné(e) membre du jury pour la soutenance de « {soutenance.projet.sujet} » le {date_str} (salle {soutenance.salle}).",
+            reverse('soutenances:mes_soutenances'),
+        )
+
+
 @role_required(User.Role.ETUDIANT)
 def ma_soutenance(request):
     """Display the authenticated student's soutenance info and grade average."""
@@ -51,7 +71,6 @@ def mes_soutenances(request):
         'soutenances/mes_soutenances.html',
         {
             'soutenances_data': soutenances_data,
-            'soutenances': soutenances,
         },
     )
 
@@ -97,21 +116,18 @@ def saisir_notes(request, pk):
         messages.error(request, 'Vous ne faites pas partie du jury de cette soutenance.')
         return redirect('soutenances:saisir_notes')
 
-    try:
-        note_obj = NoteSoutenance.objects.get(
-            soutenance=soutenance,
-            jury_member=request.user,
-        )
-    except NoteSoutenance.DoesNotExist:
-        note_obj = None
+    note_obj = NoteSoutenance.objects.filter(
+        soutenance=soutenance,
+        jury_member=request.user,
+    ).first()
 
     if request.method == 'POST':
-        note_obj, _ = NoteSoutenance.objects.get_or_create(
+        # Never persist a grade before validation: build an unsaved instance instead.
+        instance = note_obj or NoteSoutenance(
             soutenance=soutenance,
             jury_member=request.user,
-            defaults={'note': 0},
         )
-        form = NoteSoutenanceForm(request.POST, instance=note_obj)
+        form = NoteSoutenanceForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
             messages.success(
@@ -156,29 +172,18 @@ def planifier_soutenance(request):
     if request.method == 'POST':
         form = SoutenanceForm(request.POST)
         if form.is_valid():
-            soutenance = form.save()
-            date_str = soutenance.date.strftime('%d/%m/%Y à %H:%M')
-
-            etudiant = getattr(soutenance.projet, 'etudiant', None)
-            if etudiant:
-                notify(
-                    etudiant,
-                    f"Votre soutenance pour le PFE « {soutenance.projet.sujet} » a été planifiée le {date_str} en salle {soutenance.salle}.",
-                    reverse('soutenances:ma_soutenance'),
+            projet = form.cleaned_data['projet']
+            if Soutenance.objects.filter(projet=projet).exists():
+                # Guards the OneToOneField against a race between two admins.
+                form.add_error('projet', 'Ce projet a déjà une soutenance planifiée.')
+            else:
+                soutenance = form.save()
+                _notify_soutenance(soutenance)
+                messages.success(
+                    request,
+                    f"La soutenance pour « {soutenance.projet.sujet} » a été planifiée avec succès.",
                 )
-
-            for member in soutenance.jury.all():
-                notify(
-                    member,
-                    f"Vous avez été désigné(e) membre du jury pour la soutenance de « {soutenance.projet.sujet} » le {date_str} (salle {soutenance.salle}).",
-                    reverse('soutenances:mes_soutenances'),
-                )
-
-            messages.success(
-                request,
-                f"La soutenance pour « {soutenance.projet.sujet} » a été planifiée avec succès.",
-            )
-            return redirect('soutenances:planning')
+                return redirect('soutenances:planning')
     else:
         form = SoutenanceForm()
 

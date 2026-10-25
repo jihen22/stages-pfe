@@ -1,13 +1,16 @@
 from django import forms
-from django.db import models
+from django.db.models import Q
 
 from accounts.forms import BootstrapFormMixin
 from accounts.models import User
+from pfe.models import ProjetPFE
 
 from .models import NoteSoutenance, Soutenance
 
 
 class SoutenanceForm(BootstrapFormMixin, forms.ModelForm):
+    """Form for administration to schedule a defense and pick its jury."""
+
     class Meta:
         model = Soutenance
         fields = ('projet', 'date', 'salle', 'jury')
@@ -27,16 +30,13 @@ class SoutenanceForm(BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        try:
-            from pfe.models import ProjetPFE
-            qs = ProjetPFE.objects.all()
-            if self.instance and self.instance.pk and getattr(self.instance, 'projet_id', None):
-                qs = qs.filter(models.Q(soutenance__isnull=True) | models.Q(pk=self.instance.projet_id))
-            else:
-                qs = qs.filter(soutenance__isnull=True)
-            self.fields['projet'].queryset = qs
-        except Exception:
-            pass
+        projets = ProjetPFE.objects.all()
+        if self.instance.pk and self.instance.projet_id:
+            # Editing an existing defense: allow keeping its current project.
+            projets = projets.filter(Q(soutenance__isnull=True) | Q(pk=self.instance.projet_id))
+        else:
+            projets = projets.filter(soutenance__isnull=True)
+        self.fields['projet'].queryset = projets
 
         self.fields['jury'].queryset = User.objects.filter(role=User.Role.JURY)
         self.fields['jury'].required = True
