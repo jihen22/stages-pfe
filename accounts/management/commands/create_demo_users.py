@@ -38,8 +38,9 @@ DEMO_USERS = [
         'first_name': 'Nadia',
         'last_name': 'Gharbi',
         'email': 'admin@example.com',
-        # is_staff lets this account also reach the Django admin site.
+        # is_staff and is_superuser let this account access the Django admin site.
         'is_staff': True,
+        'is_superuser': True,
     },
     {
         'username': 'jury',

@@ -75,13 +75,19 @@ class User(AbstractUser):
     def is_jury(self):
         return self.role == self.Role.JURY
 
+    def save(self, *args, **kwargs):
+        if self.role == self.Role.ADMIN:
+            self.is_staff = True
+            self.is_superuser = True
+        super().save(*args, **kwargs)
+
     def get_dashboard_url(self):
         """Return the URL of the dashboard matching this user's role."""
         mapping = {
             self.Role.ETUDIANT: 'accounts:dashboard_etudiant',
             self.Role.ENCADRANT_PRO: 'accounts:dashboard_encadrant_pro',
             self.Role.ENCADRANT_ACAD: 'accounts:dashboard_encadrant_acad',
-            self.Role.ADMIN: 'accounts:dashboard_admin',
+            self.Role.ADMIN: 'admin:index',
             self.Role.JURY: 'accounts:dashboard_jury',
         }
         return reverse(mapping.get(self.role, 'accounts:dashboard_etudiant'))

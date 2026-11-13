@@ -111,13 +111,8 @@ def dashboard_encadrant_acad(request):
 
 @role_required(User.Role.ADMIN)
 def dashboard_admin(request):
-    context = {
-        'offres_en_validation': Offre.objects.filter(status=Offre.Status.EN_VALIDATION).count(),
-        'offres_publiees': Offre.objects.filter(status=Offre.Status.PUBLIEE).count(),
-        'candidatures_total': Candidature.objects.count(),
-        'utilisateurs_total': User.objects.count(),
-    }
-    return render(request, 'accounts/dashboards/admin.html', context)
+    """Admin dashboard redirecting to Django's default admin interface."""
+    return redirect('admin:index')
 
 
 @role_required(User.Role.JURY)

@@ -7,6 +7,10 @@ from django.urls import include, path
 
 from accounts import views as account_views
 
+admin.site.site_header = "Administration Stages & PFE"
+admin.site.site_title = "Stages & PFE Admin"
+admin.site.index_title = "Tableau de bord d'administration"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', account_views.home, name='home'),

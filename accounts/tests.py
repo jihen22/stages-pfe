@@ -95,7 +95,7 @@ class PageSmokeTests(TestCase):
             'notifications:list',
         ],
         User.Role.ADMIN: [
-            'accounts:dashboard_admin', 'offres:offres_a_valider',
+            'admin:index', 'offres:offres_a_valider',
             'soutenances:planning', 'notifications:list',
         ],
         User.Role.JURY: [
@@ -124,6 +124,9 @@ class LoginRedirectTests(TestCase):
         cls.etudiant = User.objects.create_user(
             username='etudiant', password='demo1234', role=User.Role.ETUDIANT
         )
+        cls.admin = User.objects.create_user(
+            username='admin', password='demo1234', role=User.Role.ADMIN
+        )
 
     def test_login_redirects_to_role_dashboard(self):
         response = self.client.post(
@@ -132,10 +135,27 @@ class LoginRedirectTests(TestCase):
         )
         self.assertRedirects(response, reverse('accounts:dashboard_etudiant'))
 
+    def test_admin_login_redirects_to_django_admin(self):
+        response = self.client.post(
+            reverse('accounts:login'),
+            {'username': 'admin', 'password': 'demo1234'},
+        )
+        self.assertRedirects(response, reverse('admin:index'))
+
     def test_dashboard_redirects_by_role(self):
         self.client.force_login(self.etudiant)
         response = self.client.get(reverse('accounts:dashboard'))
         self.assertRedirects(response, reverse('accounts:dashboard_etudiant'))
+
+    def test_admin_dashboard_redirects_to_django_admin(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('accounts:dashboard'))
+        self.assertRedirects(response, reverse('admin:index'))
+
+    def test_legacy_admin_dashboard_view_redirects_to_django_admin(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('accounts:dashboard_admin'))
+        self.assertRedirects(response, reverse('admin:index'))
 
 
 class LandingPageTests(TestCase):
