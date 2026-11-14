@@ -1,9 +1,10 @@
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse , reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView
 
@@ -11,9 +12,9 @@ from candidatures.models import Candidature
 from offres.models import Offre
 from pfe.models import ProjetPFE
 
-from .forms import BootstrapAuthenticationForm, ProfilEtudiantForm, StudentRegistrationForm , EncadrantProRegistrationForm
+from .forms import BootstrapAuthenticationForm, BootstrapPasswordChangeForm, ProfilEtudiantForm, StudentRegistrationForm , EncadrantProRegistrationForm , ProfilEncadrantProForm, UserInfoForm
 from .mixins import role_required
-from .models import ProfilEtudiant, User
+from .models import ProfilEncadrantPro, ProfilEtudiant, User
 
 
 def home(request):
@@ -138,8 +139,68 @@ def dashboard_jury(request):
 
 @login_required
 def preferences(request):
-    """Profile + appearance page, with a live preview of theme and accent."""
+    """Page profil : version riche pour l'encadrant pro, version standard pour les autres."""
+    if request.user.is_encadrant_pro:
+        return profil_encadrant_pro(request)
     return render(request, 'accounts/preferences.html', {
+        'themes': User.Theme.choices,
+        'accents': User.Accent.choices,
+    })
+
+
+SECTION_MESSAGES = {
+    'infos': 'Vos informations ont été mises à jour.',
+    'entreprise': "Les informations de l'entreprise ont été enregistrées.",
+    'securite': 'Votre mot de passe a été modifié.',
+}
+
+
+def profil_encadrant_pro(request):
+    """Profil de l'encadrant pro : infos, entreprise, sécurité, apparence."""
+    user = request.user
+    profil, _ = ProfilEncadrantPro.objects.get_or_create(user=user)
+
+    forms_ = {
+        'infos': UserInfoForm(instance=user),
+        'entreprise': ProfilEncadrantProForm(instance=profil),
+        'securite': BootstrapPasswordChangeForm(user),
+    }
+    active = 'infos'
+
+    if request.method == 'POST':
+        section = request.POST.get('section')
+        if section == 'infos':
+            form = UserInfoForm(request.POST, instance=user)
+        elif section == 'entreprise':
+            form = ProfilEncadrantProForm(request.POST, instance=profil)
+        elif section == 'securite':
+            form = BootstrapPasswordChangeForm(user, request.POST)
+        else:
+            return redirect('accounts:preferences')
+
+        if form.is_valid():
+            saved = form.save()
+            if section == 'securite':
+                # Sans cette ligne, changer le mot de passe déconnecte l'utilisateur
+                update_session_auth_hash(request, saved)
+            messages.success(request, SECTION_MESSAGES[section])
+            return redirect(f"{reverse('accounts:preferences')}#{section}")
+
+        forms_[section] = form   # on réaffiche le formulaire avec ses erreurs
+        active = section
+
+    offres = Offre.objects.filter(encadrant_pro=user)
+    return render(request, 'accounts/profil_encadrant_pro.html', {
+        'profil': profil,
+        'form_infos': forms_['infos'],
+        'form_entreprise': forms_['entreprise'],
+        'form_securite': forms_['securite'],
+        'active': active,
+        'stats': {
+            'offres': offres.count(),
+            'publiees': offres.filter(status=Offre.Status.PUBLIEE).count(),
+            'candidatures': Candidature.objects.filter(offre__encadrant_pro=user).count(),
+        },
         'themes': User.Theme.choices,
         'accents': User.Accent.choices,
     })
@@ -183,3 +244,4 @@ def set_theme(request):
         'theme': request.user.theme,
         'accent': request.user.accent,
     })
+

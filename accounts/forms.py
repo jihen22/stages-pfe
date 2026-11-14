@@ -1,6 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
 from .models import ProfilEtudiant, ProfilEncadrantPro, User
 
 
@@ -91,3 +90,34 @@ class EncadrantProRegistrationForm(StudentRegistrationForm):
             )
         return user
 
+
+class UserInfoForm(BootstrapFormMixin, forms.ModelForm):
+    """Identité de l'utilisateur (prénom, nom, e-mail)."""
+
+    email = forms.EmailField(label='Adresse e-mail')
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+        labels = {'first_name': 'Prénom', 'last_name': 'Nom'}
+
+
+class ProfilEncadrantProForm(BootstrapFormMixin, forms.ModelForm):
+    """Informations sur l'entreprise de l'encadrant."""
+
+    class Meta:
+        model = ProfilEncadrantPro
+        fields = ('entreprise', 'poste', 'secteur', 'ville', 'site_web',
+                  'telephone', 'presentation')
+        widgets = {
+            'site_web': forms.URLInput(attrs={'placeholder': 'https://…'}),
+            'telephone': forms.TextInput(attrs={'placeholder': '+216 …'}),
+            'presentation': forms.Textarea(attrs={
+                'rows': 5,
+                'placeholder': "Présentez l'entreprise en quelques lignes…",
+            }),
+        }
+
+
+class BootstrapPasswordChangeForm(BootstrapFormMixin, PasswordChangeForm):
+    """Changement de mot de passe avec le style Bootstrap."""
