@@ -11,7 +11,7 @@ from candidatures.models import Candidature
 from offres.models import Offre
 from pfe.models import ProjetPFE
 
-from .forms import BootstrapAuthenticationForm, ProfilEtudiantForm, StudentRegistrationForm
+from .forms import BootstrapAuthenticationForm, ProfilEtudiantForm, StudentRegistrationForm , EncadrantProRegistrationForm
 from .mixins import role_required
 from .models import ProfilEtudiant, User
 
@@ -45,6 +45,7 @@ class RegisterView(CreateView):
     form_class = StudentRegistrationForm
     template_name = 'accounts/register.html'
     success_url = reverse_lazy('accounts:login')
+    extra_context = {'type_compte': 'etudiant'}
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -54,6 +55,12 @@ class RegisterView(CreateView):
     def form_valid(self, form):
         messages.success(self.request, 'Compte créé avec succès, vous pouvez vous connecter.')
         return super().form_valid(form)
+
+class EncadrantProRegisterView(RegisterView):
+    """Inscription d'un encadrant professionnel (réutilise toute la logique de RegisterView)."""
+
+    form_class = EncadrantProRegistrationForm
+    extra_context = {'type_compte': 'encadrant_pro'}
 
 
 @login_required

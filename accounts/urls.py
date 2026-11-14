@@ -8,6 +8,7 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('register/', views.RegisterView.as_view(), name='register'),
+    path('register/encadrant-pro/',views.EncadrantProRegisterView.as_view(),name='register_encadrant_pro'),
 
     # Redirects to the right dashboard depending on the role
     path('dashboard/', views.dashboard, name='dashboard'),

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import ProfilEtudiant, User
+from .models import ProfilEtudiant, ProfilEncadrantPro, User
 
 
 @admin.register(User)
@@ -22,3 +22,9 @@ class UserAdmin(BaseUserAdmin):
 class ProfilEtudiantAdmin(admin.ModelAdmin):
     list_display = ('user', 'filiere', 'niveau', 'telephone')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'filiere')
+
+
+@admin.register(ProfilEncadrantPro)
+class ProfilEncadrantProAdmin(admin.ModelAdmin):
+    list_display = ('user', 'entreprise', 'poste', 'telephone')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'entreprise')
