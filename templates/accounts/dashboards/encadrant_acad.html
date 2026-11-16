@@ -3,39 +3,106 @@
 {% block title %}Tableau de bord — Encadrant académique{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-  <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }}</h1>
-  <p class="text-muted mb-0">Espace encadrant académique — prenez en charge des projets, suivez vos étudiants et validez leurs livrables.</p>
+<div class="page-head reveal">
+  <div>
+    <div class="eyebrow">Espace encadrant académique</div>
+    <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
+    <p>Prenez en charge des projets, suivez vos étudiants et validez leurs livrables.</p>
+  </div>
 </div>
 
-<div class="row g-3">
-  <div class="col-md-6 col-lg-4">
-    <div class="card card-hover h-100"><div class="card-body">
-      <div class="dashboard-icon text-warning"><i class="bi bi-diagram-3"></i></div>
-      <h5 class="card-title mt-2">Projets à encadrer</h5>
-      <p class="card-text text-muted">
-        {{ projets_disponibles }} projet{{ projets_disponibles|pluralize }} en attente d'un encadrant.
-      </p>
-      <a href="{% url 'pfe:affectations' %}" class="btn btn-warning btn-sm">Voir les projets</a>
-    </div></div>
+<div class="row g-4 mb-4">
+  {# ================= PENDING PROJECTS ================= #}
+  <div class="col-lg-5">
+    <div class="lead-card lift reveal">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <span class="lead-label">Projets à encadrer</span>
+        <span class="dash-stat-icon"><i class="bi bi-diagram-3"></i></span>
+      </div>
+      <div>
+        <div class="lead-value tabular-nums" data-counter="{{ projets_disponibles }}">{{ projets_disponibles }}</div>
+        <p class="lead-text mt-2">
+          projet{{ projets_disponibles|pluralize }} en attente d'un encadrant académique.
+        </p>
+      </div>
+      <div class="lead-actions">
+        <a href="{% url 'pfe:affectations' %}" class="btn btn-primary">
+          Voir les projets <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+        <a href="{% url 'pfe:creer_projet_encadrant' %}" class="btn btn-outline-secondary">
+          Créer un projet
+        </a>
+      </div>
+    </div>
   </div>
 
-  <div class="col-md-6 col-lg-4">
-    <div class="card card-hover h-100"><div class="card-body">
-      <div class="dashboard-icon text-primary"><i class="bi bi-people"></i></div>
-      <h5 class="card-title mt-2">Mes étudiants</h5>
-      <p class="card-text text-muted">Étudiants que vous encadrez et suivi de leurs projets.</p>
-      <a href="{% url 'pfe:mes_etudiants' %}" class="btn btn-primary btn-sm">Voir mes étudiants</a>
-    </div></div>
+  {# ================= ACTIONS ================= #}
+  <div class="col-lg-7">
+    <div class="row g-3 h-100">
+      <div class="col-md-6">
+        <a class="card lift action-card reveal" href="{% url 'pfe:mes_etudiants' %}">
+          <span class="feature-icon"><i class="bi bi-people"></i></span>
+          <div class="flex-grow-1">
+            <h3>Mes étudiants</h3>
+            <p>Les projets que vous encadrez et le suivi de chaque étudiant.</p>
+          </div>
+          <i class="bi bi-arrow-right action-arrow"></i>
+        </a>
+      </div>
+      <div class="col-md-6">
+        <a class="card lift action-card reveal" data-delay="1" href="{% url 'pfe:livrables_a_valider' %}">
+          <span class="feature-icon"><i class="bi bi-clipboard-check"></i></span>
+          <div class="flex-grow-1">
+            <h3>Livrables à valider</h3>
+            <p>Rapports et documents déposés par vos étudiants.</p>
+          </div>
+          <i class="bi bi-arrow-right action-arrow"></i>
+        </a>
+      </div>
+      <div class="col-12">
+        <a class="card lift action-card reveal" data-delay="2" href="{% url 'pfe:creer_projet_encadrant' %}">
+          <span class="feature-icon"><i class="bi bi-plus-circle"></i></span>
+          <div class="flex-grow-1">
+            <h3>Créer un projet pour un étudiant</h3>
+            <p>Assignez un sujet PFE à un étudiant qui n'a pas encore de projet.</p>
+          </div>
+          <i class="bi bi-arrow-right action-arrow"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ================= WORKFLOW ================= #}
+<div class="mb-2">
+  <div class="section-head reveal mb-4">
+    <div class="eyebrow">Votre rôle</div>
+    <h2>Un encadrement en 3 temps</h2>
+    <p>De la prise en charge du projet à la validation des livrables.</p>
   </div>
 
-  <div class="col-md-6 col-lg-4">
-    <div class="card card-hover h-100"><div class="card-body">
-      <div class="dashboard-icon text-success"><i class="bi bi-clipboard-check"></i></div>
-      <h5 class="card-title mt-2">Livrables à valider</h5>
-      <p class="card-text text-muted">Rapports et livrables déposés par vos étudiants.</p>
-      <a href="{% url 'pfe:livrables_a_valider' %}" class="btn btn-success btn-sm">Ouvrir</a>
-    </div></div>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card step-card lift reveal">
+        <div class="step-pill">1</div>
+        <h3>Prendre en charge</h3>
+        <p>Choisissez un projet en attente et devenez son encadrant académique.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card step-card lift reveal" data-delay="1">
+        <div class="step-pill">2</div>
+        <h3>Accompagner</h3>
+        <p>Suivez vos étudiants et les livrables qu'ils déposent au fil du projet.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card step-card lift reveal" data-delay="2">
+        <div class="step-pill">3</div>
+        <h3>Valider</h3>
+        <p>Approuvez les livrables ou demandez des corrections avec un commentaire.</p>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

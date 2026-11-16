@@ -1061,3 +1061,81 @@ a.dash-row:hover { background: var(--bs-tertiary-bg); }
   color: var(--bs-secondary-color);
   font-size: 0.85rem;
 }
+
+/* Highlight card + action cards */
+.lead-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  height: 100%;
+  padding: 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 18%, var(--app-border));
+  border-radius: var(--app-radius);
+  background: color-mix(in srgb, var(--app-accent) 5%, var(--bs-body-bg));
+}
+.lead-card::after {
+  content: "";
+  position: absolute;
+  top: -4rem;
+  right: -4rem;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: var(--app-accent-soft);
+}
+.lead-card > * { position: relative; z-index: 1; }
+.lead-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color);
+}
+.lead-value {
+  font-size: clamp(2.5rem, 5vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.lead-text {
+  margin: 0;
+  color: var(--bs-secondary-color);
+}
+.lead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.action-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.35rem 1.5rem;
+  color: inherit;
+}
+.action-card .feature-icon {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+.action-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.action-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--bs-secondary-color);
+}
+.action-card .action-arrow {
+  margin-left: auto;
+  padding-top: 0.15rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.85rem;
+}
