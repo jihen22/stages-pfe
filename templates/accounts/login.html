@@ -3,38 +3,57 @@
 {% block title %}Connexion{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6 col-lg-5">
-    <div class="card">
-      <div class="card-body p-4">
-        <h1 class="h4 mb-1 text-center">Connexion</h1>
-        <p class="text-muted text-center small mb-4">Accédez à votre espace personnel.</p>
-
-        {% if form.non_field_errors %}
-          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <form method="post" novalidate>
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="{{ form.username.id_for_label }}" class="form-label">Nom d'utilisateur</label>
-            {{ form.username }}
-          </div>
-          <div class="mb-3">
-            <label for="{{ form.password.id_for_label }}" class="form-label">Mot de passe</label>
-            {{ form.password }}
-          </div>
-          <input type="hidden" name="next" value="{{ next }}">
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-box-arrow-in-right"></i> Se connecter
-          </button>
-        </form>
-
-        <p class="text-center text-muted small mt-4 mb-0">
-          Pas encore de compte ? <a href="{% url 'accounts:register' %}">Inscrivez-vous</a>
+<section class="auth-section">
+  <div class="auth-card reveal">
+    <aside class="auth-aside" aria-hidden="true">
+      <a class="auth-brand" href="{% url 'home' %}">
+        <i class="bi bi-mortarboard-fill app-accent-text fs-5"></i> Stages &amp; PFE
+      </a>
+      <div>
+        <h2>Votre parcours,<br>au même endroit.</h2>
+        <p class="auth-aside-text">
+          Offres, candidatures, livrables et soutenances — un seul espace,
+          clair et sans papier.
         </p>
+        <ul class="auth-points">
+          <li><i class="bi bi-check2"></i> Un espace adapté à votre rôle</li>
+          <li><i class="bi bi-check2"></i> Suivi en temps réel</li>
+          <li><i class="bi bi-check2"></i> Notifications à chaque étape</li>
+        </ul>
       </div>
+      <p class="auth-aside-foot mb-0">Plateforme académique · {% now "Y" %}</p>
+    </aside>
+
+    <div class="auth-body">
+      <div class="eyebrow">Connexion</div>
+      <h1 class="auth-title">Content de vous revoir</h1>
+      <p class="auth-sub">Accédez à votre espace personnel.</p>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 small" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" novalidate class="auth-form">
+        {% csrf_token %}
+        <div class="auth-field">
+          <label for="{{ form.username.id_for_label }}" class="form-label">Nom d'utilisateur</label>
+          {{ form.username }}
+        </div>
+        <div class="auth-field">
+          <label for="{{ form.password.id_for_label }}" class="form-label">Mot de passe</label>
+          {{ form.password }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Se connecter
+        </button>
+      </form>
+
+      <p class="auth-foot">
+        Pas encore de compte ?
+        <a href="{% url 'accounts:register' %}">Inscrivez-vous</a>
+      </p>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}

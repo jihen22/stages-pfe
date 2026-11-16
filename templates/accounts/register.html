@@ -3,59 +3,97 @@
 {% block title %}Inscription{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-7 col-lg-6">
-    <div class="card">
-      <div class="card-body p-4">
-        <h1 class="h4 mb-1 text-center">Inscription</h1>
-        <p class="text-muted text-center small mb-4">
-          {% if type_compte == 'encadrant_pro' %}
-            Créez votre compte pour publier des offres de stage et de PFE.
-          {% else %}
-            Créez votre compte pour candidater aux offres.
-          {% endif %}
-        </p>
-
-        {# Choix du type de compte #}
-        <ul class="nav nav-pills nav-fill mb-4">
-          <li class="nav-item">
-            <a class="nav-link {% if type_compte != 'encadrant_pro' %}active{% endif %}"
-               href="{% url 'accounts:register' %}"
-               {% if type_compte != 'encadrant_pro' %}aria-current="page"{% endif %}>
-              <i class="bi bi-mortarboard"></i> Étudiant
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if type_compte == 'encadrant_pro' %}active{% endif %}"
-               href="{% url 'accounts:register_encadrant_pro' %}"
-               {% if type_compte == 'encadrant_pro' %}aria-current="page"{% endif %}>
-              <i class="bi bi-briefcase"></i> Encadrant professionnel
-            </a>
-          </li>
-        </ul>
-
-        <form method="post" novalidate>
-          {% csrf_token %}
-          {% for field in form %}
-            <div class="mb-3">
-              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-              {{ field }}
-              {% if field.help_text %}
-                <div class="form-text">{{ field.help_text|safe }}</div>
-              {% endif %}
-              {% for error in field.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-          {% endfor %}
-          <button type="submit" class="btn btn-primary w-100">Créer mon compte</button>
-        </form>
-
-        <p class="text-center text-muted small mt-4 mb-0">
-          Déjà inscrit ? <a href="{% url 'accounts:login' %}">Connectez-vous</a>
-        </p>
+<section class="auth-section">
+  <div class="auth-card reveal">
+    <aside class="auth-aside" aria-hidden="true">
+      <a class="auth-brand" href="{% url 'home' %}">
+        <i class="bi bi-mortarboard-fill app-accent-text fs-5"></i> Stages &amp; PFE
+      </a>
+      <div>
+        {% if type_compte == 'encadrant_pro' %}
+          <h2>Recrutez vos<br>futurs talents.</h2>
+          <p class="auth-aside-text">
+            Publiez vos offres de stage et de PFE, recevez les candidatures et
+            suivez les projets de votre entreprise.
+          </p>
+          <ul class="auth-points">
+            <li><i class="bi bi-check2"></i> Publier et soumettre des offres</li>
+            <li><i class="bi bi-check2"></i> Recevoir et traiter les candidatures</li>
+            <li><i class="bi bi-check2"></i> Suivre les projets acceptés</li>
+          </ul>
+        {% else %}
+          <h2>Votre parcours,<br>au même endroit.</h2>
+          <p class="auth-aside-text">
+            Trouvez un stage ou un PFE, candidatez en ligne et suivez vos
+            livrables jusqu'à la soutenance.
+          </p>
+          <ul class="auth-points">
+            <li><i class="bi bi-check2"></i> Parcourir les offres publiées</li>
+            <li><i class="bi bi-check2"></i> Candidater avec CV et lettre</li>
+            <li><i class="bi bi-check2"></i> Suivre vos livrables et votre soutenance</li>
+          </ul>
+        {% endif %}
       </div>
+      <p class="auth-aside-foot mb-0">Plateforme académique · {% now "Y" %}</p>
+    </aside>
+
+    <div class="auth-body">
+      <div class="eyebrow">Inscription</div>
+      <h1 class="auth-title">Créer un compte</h1>
+      <p class="auth-sub">
+        {% if type_compte == 'encadrant_pro' %}
+          Créez votre compte pour publier des offres de stage et de PFE.
+        {% else %}
+          Créez votre compte pour candidater aux offres.
+        {% endif %}
+      </p>
+
+      {# Choix du type de compte #}
+      <ul class="nav nav-pills nav-fill auth-tabs">
+        <li class="nav-item">
+          <a class="nav-link {% if type_compte != 'encadrant_pro' %}active{% endif %}"
+             href="{% url 'accounts:register' %}"
+             {% if type_compte != 'encadrant_pro' %}aria-current="page"{% endif %}>
+            <i class="bi bi-mortarboard"></i> Étudiant
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if type_compte == 'encadrant_pro' %}active{% endif %}"
+             href="{% url 'accounts:register_encadrant_pro' %}"
+             {% if type_compte == 'encadrant_pro' %}aria-current="page"{% endif %}>
+            <i class="bi bi-briefcase"></i> Encadrant professionnel
+          </a>
+        </li>
+      </ul>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 small" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <form method="post" novalidate class="auth-form">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="auth-field">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="form-text">{{ field.help_text|safe }}</div>
+            {% endif %}
+            {% for error in field.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-person-plus me-1"></i> Créer mon compte
+        </button>
+      </form>
+
+      <p class="auth-foot">
+        Déjà inscrit ?
+        <a href="{% url 'accounts:login' %}">Connectez-vous</a>
+      </p>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}

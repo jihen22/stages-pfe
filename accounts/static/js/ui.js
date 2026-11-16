@@ -92,9 +92,44 @@
     });
   }
 
+  /* Add a "show/hide" button to every password input inside an auth form. */
+  function initPasswordToggles() {
+    document.querySelectorAll(".auth-form input[type='password']").forEach(function (input) {
+      if (input.dataset.passwordReady) return;
+      input.dataset.passwordReady = "1";
+
+      var wrapper = document.createElement("div");
+      wrapper.className = "password-field";
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "password-toggle";
+      button.setAttribute("aria-label", "Afficher le mot de passe");
+      button.setAttribute("aria-pressed", "false");
+      button.innerHTML = '<i class="bi bi-eye"></i>';
+      wrapper.appendChild(button);
+
+      button.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.setAttribute("aria-pressed", show ? "true" : "false");
+        button.setAttribute(
+          "aria-label",
+          show ? "Masquer le mot de passe" : "Afficher le mot de passe"
+        );
+        button.innerHTML = show
+          ? '<i class="bi bi-eye-slash"></i>'
+          : '<i class="bi bi-eye"></i>';
+      });
+    });
+  }
+
   function init() {
     initReveal();
     initCounters();
+    initPasswordToggles();
   }
 
   if (document.readyState === "loading") {
