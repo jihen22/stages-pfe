@@ -3,28 +3,105 @@
 {% block title %}Tableau de bord — Jury{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-  <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }}</h1>
-  <p class="text-muted mb-0">Espace jury — consultez vos soutenances et saisissez les notes.</p>
+<div class="page-head reveal">
+  <div>
+    <div class="eyebrow">Espace jury</div>
+    <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
+    <p>Consultez vos soutenances, évaluez les projets et saisissez vos notes.</p>
+  </div>
 </div>
 
-<div class="row g-3">
-  <div class="col-md-6 col-lg-4">
-    <div class="card card-hover h-100"><div class="card-body">
-      <div class="dashboard-icon text-primary"><i class="bi bi-calendar-check"></i></div>
-      <h5 class="card-title mt-2">Mes soutenances</h5>
-      <p class="card-text text-muted">Soutenances auxquelles vous participez.</p>
-      <a href="{% url 'soutenances:mes_soutenances' %}" class="btn btn-primary btn-sm">Consulter</a>
-    </div></div>
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <a class="card lift action-card reveal" href="{% url 'soutenances:mes_soutenances' %}">
+      <span class="feature-icon"><i class="bi bi-calendar-check"></i></span>
+      <div class="flex-grow-1">
+        <h3>Mes soutenances</h3>
+        <p>Le planning des soutenances auxquelles vous participez : date, salle et projet.</p>
+      </div>
+      <i class="bi bi-arrow-right action-arrow"></i>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a class="card lift action-card reveal" data-delay="1" href="{% url 'soutenances:saisir_notes' %}">
+      <span class="feature-icon"><i class="bi bi-pencil-square"></i></span>
+      <div class="flex-grow-1">
+        <h3>Saisir les notes</h3>
+        <p>Attribuez une note sur 20 et laissez une remarque pour chaque soutenance évaluée.</p>
+      </div>
+      <i class="bi bi-arrow-right action-arrow"></i>
+    </a>
+  </div>
+</div>
+
+{# ================= WORKFLOW ================= #}
+<div class="mb-4">
+  <div class="section-head reveal mb-4">
+    <div class="eyebrow">Votre rôle</div>
+    <h2>Une évaluation en 3 temps</h2>
+    <p>De la consultation du planning à la saisie de votre note.</p>
   </div>
 
-  <div class="col-md-6 col-lg-4">
-    <div class="card card-hover h-100"><div class="card-body">
-      <div class="dashboard-icon text-success"><i class="bi bi-pencil-square"></i></div>
-      <h5 class="card-title mt-2">Saisir les notes</h5>
-      <p class="card-text text-muted">Notes et remarques pour les soutenances passées.</p>
-      <a href="{% url 'soutenances:saisir_notes' %}" class="btn btn-success btn-sm">Saisir</a>
-    </div></div>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card step-card lift reveal">
+        <div class="step-pill">1</div>
+        <h3>Consulter</h3>
+        <p>Retrouvez les soutenances où vous êtes membre du jury, avec leur horaire et leur salle.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card step-card lift reveal" data-delay="1">
+        <div class="step-pill">2</div>
+        <h3>Évaluer</h3>
+        <p>Assistez à la présentation et appréciez le travail réalisé par l'étudiant.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card step-card lift reveal" data-delay="2">
+        <div class="step-pill">3</div>
+        <h3>Noter</h3>
+        <p>Saisissez votre note sur 20 et vos remarques pour chaque soutenance.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ================= GOOD TO KNOW ================= #}
+<div class="card reveal">
+  <div class="dash-card-head">
+    <h2>Bon à savoir</h2>
+  </div>
+  <div class="card-body">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="d-flex gap-2">
+          <i class="bi bi-123 app-accent-text mt-1"></i>
+          <div>
+            <div class="fw-semibold small">Une note sur 20</div>
+            <div class="text-muted small">Chaque membre du jury saisit sa propre note et sa remarque.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex gap-2">
+          <i class="bi bi-pencil app-accent-text mt-1"></i>
+          <div>
+            <div class="fw-semibold small">Modifiable</div>
+            <div class="text-muted small">Vous pouvez revenir sur votre note à tout moment.</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex gap-2">
+          <i class="bi bi-calculator app-accent-text mt-1"></i>
+          <div>
+            <div class="fw-semibold small">Moyenne automatique</div>
+            <div class="text-muted small">La moyenne du jury est calculée à partir des notes saisies.</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
