@@ -3,78 +3,110 @@
 {% block title %}Tableau de bord — Étudiant{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+<div class="page-head reveal">
   <div>
-    <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }} 👋</h1>
-    <p class="text-muted mb-0">Espace étudiant — trouvez un stage ou un PFE et suivez vos candidatures.</p>
+    <div class="eyebrow">Espace étudiant</div>
+    <h1>Bonjour {{ user.first_name|default:user.username }} 👋</h1>
+    <p>Retrouvez vos candidatures, complétez votre profil et découvrez les dernières offres.</p>
   </div>
   <a href="{% url 'offres:offre_list' %}" class="btn btn-primary">
     <i class="bi bi-search me-1"></i> Parcourir les offres
   </a>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3">
-    {% include "partials/_stat_card.html" with label="Candidatures" value=candidatures_total icon="file-earmark-text" color="primary" %}
+{# ================= KEY NUMBERS ================= #}
+<div class="row g-3 g-lg-4 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card dash-stat lift reveal">
+      <div class="dash-stat-top">
+        <div class="dash-stat-icon"><i class="bi bi-file-earmark-text"></i></div>
+      </div>
+      <div class="dash-stat-value tabular-nums" data-counter="{{ candidatures_total }}">{{ candidatures_total }}</div>
+      <div class="dash-stat-label">Candidatures</div>
+    </div>
   </div>
-  <div class="col-6 col-lg-3">
-    {% include "partials/_stat_card.html" with label="En attente" value=candidatures_en_attente icon="hourglass-split" color="warning" %}
+  <div class="col-6 col-xl-3">
+    <div class="card dash-stat lift reveal" data-delay="1">
+      <div class="dash-stat-top">
+        <div class="dash-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+      </div>
+      <div class="dash-stat-value tabular-nums" data-counter="{{ candidatures_en_attente }}">{{ candidatures_en_attente }}</div>
+      <div class="dash-stat-label">En attente</div>
+    </div>
   </div>
-  <div class="col-6 col-lg-3">
-    {% include "partials/_stat_card.html" with label="Acceptées" value=candidatures_acceptees icon="check-circle" color="success" %}
+  <div class="col-6 col-xl-3">
+    <div class="card dash-stat lift reveal" data-delay="2">
+      <div class="dash-stat-top">
+        <div class="dash-stat-icon"><i class="bi bi-check-circle"></i></div>
+      </div>
+      <div class="dash-stat-value tabular-nums" data-counter="{{ candidatures_acceptees }}">{{ candidatures_acceptees }}</div>
+      <div class="dash-stat-label">Acceptées</div>
+    </div>
   </div>
-  <div class="col-6 col-lg-3">
-    {% include "partials/_stat_card.html" with label="Refusées" value=candidatures_refusees icon="x-circle" color="danger" %}
+  <div class="col-6 col-xl-3">
+    <div class="card dash-stat lift reveal" data-delay="3">
+      <div class="dash-stat-top">
+        <div class="dash-stat-icon"><i class="bi bi-x-circle"></i></div>
+      </div>
+      <div class="dash-stat-value tabular-nums" data-counter="{{ candidatures_refusees }}">{{ candidatures_refusees }}</div>
+      <div class="dash-stat-label">Refusées</div>
+    </div>
   </div>
 </div>
 
-{# Profile completion #}
-<div class="card mb-4">
-  <div class="card-body">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-      <div class="fw-semibold"><i class="bi bi-person-badge me-1"></i> Profil complet à {{ profil_completion }}%</div>
+{# ================= PROFILE COMPLETION ================= #}
+<div class="card completion-card mb-4 reveal">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="dash-stat-icon"><i class="bi bi-person-badge"></i></span>
+        <h2 class="h6 mb-0">Profil complet</h2>
+      </div>
+      <p class="small text-muted mb-0 mt-2">
+        Un profil complet améliore vos chances auprès des entreprises et des encadrants.
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="completion-value tabular-nums"
+            data-counter="{{ profil_completion }}" data-counter-suffix="%">{{ profil_completion }}%</span>
       {% if profil_completion < 100 %}
         <a href="{% url 'accounts:profil_etudiant' %}" class="btn btn-sm btn-primary">
-          <i class="bi bi-pencil me-1"></i> Compléter mon profil
+          <i class="bi bi-pencil me-1"></i> Compléter
         </a>
       {% else %}
-        <span class="badge text-bg-success rounded-pill"><i class="bi bi-check-lg me-1"></i> Profil complet</span>
+        <span class="badge text-bg-success rounded-pill"><i class="bi bi-check-lg me-1"></i> Complet</span>
       {% endif %}
     </div>
-    <div class="progress" role="progressbar" aria-label="Complétion du profil"
-         aria-valuenow="{{ profil_completion }}" aria-valuemin="0" aria-valuemax="100" style="height: .6rem;">
-      <div class="progress-bar" style="width: {{ profil_completion }}%"></div>
-    </div>
+  </div>
+  <div class="progress" role="progressbar" aria-label="Complétion du profil"
+       aria-valuenow="{{ profil_completion }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-bar" style="width: {{ profil_completion }}%"></div>
   </div>
 </div>
 
 <div class="row g-4">
+  {# ================= RECENT APPLICATIONS ================= #}
   <div class="col-lg-7">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Dernières candidatures</span>
-        <a href="{% url 'candidatures:mes_candidatures' %}" class="small text-decoration-none">Tout voir</a>
+    <div class="card h-100 reveal">
+      <div class="dash-card-head">
+        <h2>Dernières candidatures</h2>
+        <a href="{% url 'candidatures:mes_candidatures' %}">Tout voir <i class="bi bi-arrow-right ms-1"></i></a>
       </div>
+
       {% if dernieres_candidatures %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead>
-              <tr><th>Offre</th><th>Date</th><th>Statut</th></tr>
-            </thead>
-            <tbody>
-              {% for c in dernieres_candidatures %}
-                <tr>
-                  <td>
-                    <div class="fw-semibold">{{ c.offre.titre }}</div>
-                    <div class="text-muted small">{{ c.offre.get_type_display }}</div>
-                  </td>
-                  <td class="text-muted small">{{ c.date_candidature|date:"d/m/Y" }}</td>
-                  <td>{% include "partials/_status_badge.html" with status=c.status label=c.get_status_display %}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        {% for c in dernieres_candidatures %}
+          <a class="dash-row" href="{% url 'candidatures:mes_candidatures' %}">
+            <div class="dash-row-main">
+              <span class="dash-row-title">{{ c.offre.titre }}</span>
+              <span class="dash-row-meta">
+                {{ c.offre.get_type_display }} · {{ c.date_candidature|date:"d/m/Y" }}
+              </span>
+            </div>
+            <span class="dash-row-side">
+              {% include "partials/_status_badge.html" with status=c.status label=c.get_status_display %}
+            </span>
+          </a>
+        {% endfor %}
       {% else %}
         {% url 'offres:offre_list' as offres_url %}
         {% include "partials/_empty_state.html" with icon="file-earmark-text" title="Aucune candidature" text="Vous n'avez pas encore postulé à une offre." action_url=offres_url action_label="Parcourir les offres" action_icon="search" %}
@@ -83,44 +115,64 @@
   </div>
 
   <div class="col-lg-5">
-    <div class="card mb-4">
-      <div class="card-header fw-semibold">Offres récentes</div>
-      {% if offres_recentes %}
-        <ul class="list-group list-group-flush">
-          {% for offre in offres_recentes %}
-            <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
-              <div>
-                <div class="fw-semibold">{{ offre.titre }}</div>
-                <div class="text-muted small">
-                  {{ offre.get_type_display }}
-                  {% if offre.encadrant_pro %}· {{ offre.encadrant_pro.get_full_name|default:offre.encadrant_pro.username }}{% endif %}
-                </div>
-              </div>
-              {% if offre.pk in offres_postulees %}
-                <span class="badge text-bg-secondary rounded-pill align-self-center">Déjà postulé</span>
-              {% else %}
-                <a href="{% url 'candidatures:postuler' offre.pk %}" class="btn btn-sm btn-primary align-self-center">Postuler</a>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="card-body">
-          {% include "partials/_empty_state.html" with icon="briefcase" title="Aucune offre" text="Aucune offre publiée pour le moment." %}
-        </div>
-      {% endif %}
-      <div class="card-footer text-end">
-        <a href="{% url 'offres:offre_list' %}" class="small text-decoration-none">Voir toutes les offres</a>
+    {# ================= RECENT OFFERS ================= #}
+    <div class="card mb-4 reveal">
+      <div class="dash-card-head">
+        <h2>Offres récentes</h2>
+        <a href="{% url 'offres:offre_list' %}">Tout voir <i class="bi bi-arrow-right ms-1"></i></a>
       </div>
+
+      {% for offre in offres_recentes %}
+        <div class="dash-row">
+          <div class="dash-row-main">
+            <span class="dash-row-title">{{ offre.titre }}</span>
+            <span class="dash-row-meta">
+              {{ offre.get_type_display }}
+              {% if offre.encadrant_pro %}· {{ offre.encadrant_pro.get_full_name|default:offre.encadrant_pro.username }}{% endif %}
+            </span>
+          </div>
+          <div class="dash-row-side">
+            {% if offre.pk in offres_postulees %}
+              <span class="badge text-bg-secondary rounded-pill">Déjà postulé</span>
+            {% else %}
+              <a href="{% url 'candidatures:postuler' offre.pk %}" class="btn btn-sm btn-primary">Postuler</a>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        {% include "partials/_empty_state.html" with icon="briefcase" title="Aucune offre" text="Aucune offre publiée pour le moment." %}
+      {% endfor %}
     </div>
 
-    <div class="card">
-      <div class="card-body d-grid gap-2">
-        <a href="{% url 'pfe:mon_pfe' %}" class="btn btn-outline-primary">
-          <i class="bi bi-kanban me-1"></i> Mon PFE
+    {# ================= QUICK ACCESS ================= #}
+    <div class="card reveal">
+      <div class="dash-card-head">
+        <h2>Accès rapide</h2>
+      </div>
+      <div class="p-2">
+        <a class="quick-link" href="{% url 'pfe:mon_pfe' %}">
+          <span class="quick-link-icon"><i class="bi bi-kanban"></i></span>
+          <span>
+            <span class="quick-link-title">Mon PFE</span>
+            <span class="quick-link-text">Livrables et avancement du projet</span>
+          </span>
+          <i class="bi bi-arrow-right quick-link-arrow"></i>
         </a>
-        <a href="{% url 'soutenances:ma_soutenance' %}" class="btn btn-outline-primary">
-          <i class="bi bi-calendar-event me-1"></i> Ma soutenance
+        <a class="quick-link" href="{% url 'soutenances:ma_soutenance' %}">
+          <span class="quick-link-icon"><i class="bi bi-calendar-event"></i></span>
+          <span>
+            <span class="quick-link-title">Ma soutenance</span>
+            <span class="quick-link-text">Date, salle et composition du jury</span>
+          </span>
+          <i class="bi bi-arrow-right quick-link-arrow"></i>
+        </a>
+        <a class="quick-link" href="{% url 'accounts:profil_etudiant' %}">
+          <span class="quick-link-icon"><i class="bi bi-person-badge"></i></span>
+          <span>
+            <span class="quick-link-title">Mon profil étudiant</span>
+            <span class="quick-link-text">CV, compétences et coordonnées</span>
+          </span>
+          <i class="bi bi-arrow-right quick-link-arrow"></i>
         </a>
       </div>
     </div>

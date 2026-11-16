@@ -908,3 +908,156 @@ h1, h2, h3, h4 {
   .feature-card,
   .step-card { padding: 1.25rem; }
 }
+
+/* --------------------------------------------------------------------------
+   9. App dashboards
+   -------------------------------------------------------------------------- */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.page-head h1 {
+  margin: 0.4rem 0 0.35rem;
+  font-size: clamp(1.6rem, 3vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.page-head p {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--bs-secondary-color);
+}
+
+.dash-stat {
+  height: 100%;
+  padding: 1.25rem 1.35rem;
+}
+.dash-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.dash-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 1.05rem;
+}
+.dash-stat-value {
+  margin-top: 1rem;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.dash-stat-label {
+  margin-top: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--bs-secondary-color);
+}
+
+.dash-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--app-border);
+}
+.dash-card-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.dash-card-head a {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--app-border);
+  color: inherit;
+  transition: background-color var(--app-duration-fast) ease;
+}
+.dash-row:last-child { border-bottom: 0; }
+a.dash-row:hover { background: var(--bs-tertiary-bg); }
+
+.dash-row-main {
+  flex: 1;
+  min-width: 0;
+}
+.dash-row-title {
+  display: block;
+  overflow: hidden;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-row-meta {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  color: var(--bs-secondary-color);
+}
+.dash-row-side { flex: 0 0 auto; }
+
+.completion-card { padding: 1.5rem; }
+.completion-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.completion-card .progress {
+  height: 0.5rem;
+  background: var(--bs-tertiary-bg);
+}
+
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--app-radius-sm);
+  color: inherit;
+  transition: background-color var(--app-duration-fast) ease;
+}
+.quick-link:hover { background: var(--bs-tertiary-bg); }
+.quick-link .quick-link-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: 0.6rem;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+}
+.quick-link .quick-link-title {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.quick-link .quick-link-text {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--bs-secondary-color);
+}
+.quick-link .quick-link-arrow {
+  margin-left: auto;
+  color: var(--bs-secondary-color);
+  font-size: 0.85rem;
+}
