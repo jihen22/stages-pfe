@@ -4,18 +4,20 @@
 
 {% block content %}
 {# ================= HERO ================= #}
-<section class="landing-hero mb-5">
-  <div class="row align-items-center g-4">
-    <div class="col-lg-7">
-      <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill mb-3">
-        <i class="bi bi-stars"></i> Plateforme académique
+<section class="hero-section mb-5">
+  <div class="row align-items-center g-5">
+    <div class="col-lg-6">
+      <span class="hero-badge reveal">
+        <span class="hero-dot"></span> Plateforme académique
       </span>
-      <h1 class="display-4 mb-3">Gérez vos stages et PFE, de l'offre à la soutenance</h1>
-      <p class="lead text-muted mb-4">
+      <h1 class="hero-title reveal" data-delay="1">
+        Gérez vos stages et PFE, <span class="text-primary">de l'offre à la soutenance</span>.
+      </h1>
+      <p class="hero-lead reveal" data-delay="2">
         Une seule plateforme pour publier des offres, candidater en ligne, suivre les
         projets de fin d'études, déposer les livrables et organiser les soutenances.
       </p>
-      <div class="d-flex flex-wrap gap-2">
+      <div class="d-flex flex-wrap gap-2 reveal" data-delay="3">
         {% if user.is_authenticated %}
           <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg">
             <i class="bi bi-speedometer2"></i> Aller à mon tableau de bord
@@ -32,198 +34,300 @@
           </a>
         {% endif %}
       </div>
+      <div class="hero-meta reveal" data-delay="4">
+        <span><i class="bi bi-check2 me-1"></i> Sans papier</span>
+        <span><i class="bi bi-check2 me-1"></i> Suivi en temps réel</span>
+        <span><i class="bi bi-check2 me-1"></i> Un espace par rôle</span>
+      </div>
     </div>
-    <div class="col-lg-5">
-      <div class="row g-3">
-        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
-          <div class="service-icon mb-2"><i class="bi bi-briefcase"></i></div>
-          <div class="fw-semibold">Offres &amp; PFE</div>
-          <div class="text-muted small">Publiées par les entreprises</div>
-        </div></div></div>
-        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
-          <div class="service-icon mb-2"><i class="bi bi-send-check"></i></div>
-          <div class="fw-semibold">Candidatures</div>
-          <div class="text-muted small">100% en ligne</div>
-        </div></div></div>
-        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
-          <div class="service-icon mb-2"><i class="bi bi-kanban"></i></div>
-          <div class="fw-semibold">Suivi PFE</div>
-          <div class="text-muted small">Livrables &amp; versions</div>
-        </div></div></div>
-        <div class="col-6"><div class="card card-hover h-100"><div class="card-body">
-          <div class="service-icon mb-2"><i class="bi bi-mortarboard"></i></div>
-          <div class="fw-semibold">Soutenances</div>
-          <div class="text-muted small">Planning &amp; jury</div>
-        </div></div></div>
+
+    <div class="col-lg-6">
+      <div class="hero-preview reveal" data-delay="2" aria-hidden="true">
+        <div class="preview-top">
+          <span class="preview-dot"></span>
+          <span class="preview-dot"></span>
+          <span class="preview-dot"></span>
+          <span class="preview-label">Aperçu · Tableau de bord</span>
+        </div>
+
+        <div class="preview-tiles">
+          <div class="preview-tile">
+            <div class="preview-value">3</div>
+            <div class="preview-caption">Candidatures</div>
+          </div>
+          <div class="preview-tile">
+            <div class="preview-value">1</div>
+            <div class="preview-caption">Acceptée</div>
+          </div>
+          <div class="preview-tile">
+            <div class="preview-value">68%</div>
+            <div class="preview-caption">Profil</div>
+          </div>
+        </div>
+
+        <div class="preview-panel">
+          <div class="preview-panel-head">
+            <span>Profil étudiant</span>
+            <span class="preview-chip">En cours</span>
+          </div>
+          <div class="progress" style="height: .4rem;" role="progressbar"
+               aria-label="Progression du profil" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width: 68%"></div>
+          </div>
+          <div class="preview-row mt-2">
+            <i class="bi bi-person-check"></i> CV et compétences à jour
+            <span class="preview-row-end">+12%</span>
+          </div>
+        </div>
+
+        <div class="preview-panel">
+          <div class="preview-panel-head">
+            <span>Mon PFE</span>
+            <span class="preview-chip">En cours</span>
+          </div>
+          <div class="preview-row">
+            <i class="bi bi-file-earmark-text"></i> Rapport d'avancement
+            <span class="preview-row-end">Validé</span>
+          </div>
+          <div class="preview-row">
+            <i class="bi bi-calendar-event"></i> Soutenance
+            <span class="preview-row-end">12 nov.</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-{# ================= SERVICES ================= #}
-<section id="services" class="mb-5">
-  <div class="text-center mb-4">
-    <div class="section-eyebrow mb-1">Nos services</div>
-    <h2 class="section-title h1 mb-2">Tout au même endroit</h2>
-    <p class="text-muted mb-0">De la publication d'une offre à la soutenance finale.</p>
+{# ================= KEY NUMBERS ================= #}
+<section class="stat-strip mb-5 reveal" aria-label="La plateforme en chiffres">
+  <div class="row g-4 text-center">
+    <div class="col-6 col-md-3">
+      <div class="stat-number tabular-nums" data-counter="5">5</div>
+      <div class="stat-label">rôles, un espace dédié</div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-number tabular-nums" data-counter="4">4</div>
+      <div class="stat-label">étapes de l'offre à la soutenance</div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-number tabular-nums" data-counter="100" data-counter-suffix="%">100%</div>
+      <div class="stat-label">des démarches en ligne</div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-number tabular-nums" data-counter="1">1</div>
+      <div class="stat-label">plateforme pour tout suivre</div>
+    </div>
   </div>
+</section>
+
+{# ================= SERVICES ================= #}
+<section id="services" class="mb-5 pb-2">
+  <div class="section-head reveal">
+    <div class="eyebrow">Nos services</div>
+    <h2>Tout au même endroit</h2>
+    <p>De la publication d'une offre à la soutenance finale.</p>
+  </div>
+
   <div class="row g-4">
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-briefcase"></i></div>
-      <h5 class="card-title">Offres de stage / PFE</h5>
-      <p class="text-muted mb-0">Publiez, validez et diffusez les offres de stage et de PFE aux étudiants.</p>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-file-earmark-text"></i></div>
-      <h5 class="card-title">Candidatures en ligne</h5>
-      <p class="text-muted mb-0">Postulez avec CV et lettre de motivation, et recevez la décision en temps réel.</p>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-clipboard-check"></i></div>
-      <h5 class="card-title">Suivi et livrables</h5>
-      <p class="text-muted mb-0">Déposez vos rapports, versionnez-les et suivez la validation de l'encadrant.</p>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-calendar-event"></i></div>
-      <h5 class="card-title">Planification des soutenances</h5>
-      <p class="text-muted mb-0">Planifiez les dates, les salles et la composition du jury.</p>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-folder2-open"></i></div>
-      <h5 class="card-title">Documents administratifs</h5>
-      <p class="text-muted mb-0">Centralisez CV, conventions, rapports et attestations au même endroit.</p>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-speedometer2"></i></div>
-      <h5 class="card-title">Tableaux de bord</h5>
-      <p class="text-muted mb-0">Chaque rôle dispose d'un espace dédié avec ses indicateurs clés.</p>
-    </div></div></div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-briefcase"></i></div>
+        <h3>Offres de stage / PFE</h3>
+        <p>Publiez, validez et diffusez les offres de stage et de PFE aux étudiants.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <h3>Candidatures en ligne</h3>
+        <p>Postulez avec CV et lettre de motivation, et recevez la décision en temps réel.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-clipboard-check"></i></div>
+        <h3>Suivi et livrables</h3>
+        <p>Déposez vos rapports, versionnez-les et suivez la validation de l'encadrant.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-calendar-event"></i></div>
+        <h3>Planification des soutenances</h3>
+        <p>Planifiez les dates, les salles et la composition du jury.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-folder2-open"></i></div>
+        <h3>Documents administratifs</h3>
+        <p>Centralisez CV, conventions, rapports et attestations au même endroit.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-speedometer2"></i></div>
+        <h3>Tableaux de bord</h3>
+        <p>Chaque rôle dispose d'un espace dédié avec ses indicateurs clés.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 {# ================= COMMENT ÇA MARCHE ================= #}
-<section id="etapes" class="mb-5">
-  <div class="text-center mb-4">
-    <div class="section-eyebrow mb-1">Comment ça marche</div>
-    <h2 class="section-title h1 mb-2">4 étapes, un parcours clair</h2>
+<section id="etapes" class="mb-5 pb-2">
+  <div class="section-head reveal">
+    <div class="eyebrow">Comment ça marche</div>
+    <h2>4 étapes, un parcours clair</h2>
+    <p>Un déroulé simple, du premier clic jusqu'à la note finale.</p>
   </div>
+
   <div class="row g-4">
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
-      <div class="step-number mb-3">1</div>
-      <h5>Publier</h5>
-      <p class="text-muted small mb-0">L'entreprise crée une offre, l'administration la valide et la publie.</p>
-    </div></div></div>
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
-      <div class="step-number mb-3">2</div>
-      <h5>Postuler</h5>
-      <p class="text-muted small mb-0">L'étudiant candidate avec son CV et sa lettre de motivation.</p>
-    </div></div></div>
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
-      <div class="step-number mb-3">3</div>
-      <h5>Suivre</h5>
-      <p class="text-muted small mb-0">Le PFE est créé, les encadrants suivent les livrables et versions.</p>
-    </div></div></div>
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body text-center">
-      <div class="step-number mb-3">4</div>
-      <h5>Soutenir</h5>
-      <p class="text-muted small mb-0">La soutenance est planifiée et le jury est désigné.</p>
-    </div></div></div>
+    <div class="col-6 col-lg-3">
+      <div class="card step-card lift reveal" data-delay="1">
+        <div class="step-pill">1</div>
+        <h3>Publier</h3>
+        <p>L'entreprise crée une offre, l'administration la valide et la publie.</p>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card step-card lift reveal" data-delay="2">
+        <div class="step-pill">2</div>
+        <h3>Postuler</h3>
+        <p>L'étudiant candidate avec son CV et sa lettre de motivation.</p>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card step-card lift reveal" data-delay="3">
+        <div class="step-pill">3</div>
+        <h3>Suivre</h3>
+        <p>Le PFE est créé, les encadrants suivent les livrables et versions.</p>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card step-card lift reveal" data-delay="4">
+        <div class="step-pill">4</div>
+        <h3>Soutenir</h3>
+        <p>La soutenance est planifiée et le jury est désigné.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 {# ================= POUR QUI ================= #}
-<section id="roles" class="mb-5">
-  <div class="text-center mb-4">
-    <div class="section-eyebrow mb-1">Pour qui ?</div>
-    <h2 class="section-title h1 mb-2">Un espace pour chaque rôle</h2>
+<section id="roles" class="mb-5 pb-2">
+  <div class="section-head reveal">
+    <div class="eyebrow">Pour qui ?</div>
+    <h2>Un espace pour chaque rôle</h2>
+    <p>Les bonnes actions, au bon endroit, pour chaque profil.</p>
   </div>
+
   <div class="row g-4">
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-mortarboard"></i></div>
-      <h5>Étudiant</h5>
-      <ul class="text-muted small mb-0 ps-3">
-        <li>Parcourir les offres et candidater en ligne</li>
-        <li>Suivre l'avancement de mon PFE et mes livrables</li>
-        <li>Consulter ma soutenance et mon jury</li>
-      </ul>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-building"></i></div>
-      <h5>Encadrant professionnel</h5>
-      <ul class="text-muted small mb-0 ps-3">
-        <li>Publier et soumettre des offres de stage / PFE</li>
-        <li>Recevoir et traiter les candidatures</li>
-        <li>Suivre les projets acceptés par mon entreprise</li>
-      </ul>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-person-workspace"></i></div>
-      <h5>Encadrant académique</h5>
-      <ul class="text-muted small mb-0 ps-3">
-        <li>Prendre en charge un projet ou en créer un pour un étudiant</li>
-        <li>Suivre mes étudiants et leurs projets</li>
-        <li>Valider ou demander la correction des livrables</li>
-        <li>Être informé de chaque dépôt</li>
-      </ul>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-shield-check"></i></div>
-      <h5>Administration</h5>
-      <ul class="text-muted small mb-0 ps-3">
-        <li>Valider les offres soumises par les entreprises</li>
-        <li>Valider les offres et planifier les soutenances</li>
-        <li>Superviser l'ensemble de la plateforme</li>
-      </ul>
-    </div></div></div>
-    <div class="col-md-6 col-lg-4"><div class="card card-hover h-100"><div class="card-body">
-      <div class="service-icon mb-3"><i class="bi bi-people"></i></div>
-      <h5>Jury</h5>
-      <ul class="text-muted small mb-0 ps-3">
-        <li>Consulter les soutenances planifiées</li>
-        <li>Accéder aux dossiers et livrables</li>
-        <li>Saisir les notes et remarques</li>
-      </ul>
-    </div></div></div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-mortarboard"></i></div>
+        <h3>Étudiant</h3>
+        <ul class="role-list">
+          <li><i class="bi bi-check2"></i> Parcourir les offres et candidater en ligne</li>
+          <li><i class="bi bi-check2"></i> Suivre l'avancement de mon PFE et mes livrables</li>
+          <li><i class="bi bi-check2"></i> Consulter ma soutenance et mon jury</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-building"></i></div>
+        <h3>Encadrant professionnel</h3>
+        <ul class="role-list">
+          <li><i class="bi bi-check2"></i> Publier et soumettre des offres de stage / PFE</li>
+          <li><i class="bi bi-check2"></i> Recevoir et traiter les candidatures</li>
+          <li><i class="bi bi-check2"></i> Suivre les projets acceptés par mon entreprise</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-person-workspace"></i></div>
+        <h3>Encadrant académique</h3>
+        <ul class="role-list">
+          <li><i class="bi bi-check2"></i> Prendre en charge un projet ou en créer un</li>
+          <li><i class="bi bi-check2"></i> Suivre mes étudiants et leurs projets</li>
+          <li><i class="bi bi-check2"></i> Valider ou demander la correction des livrables</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+        <h3>Administration</h3>
+        <ul class="role-list">
+          <li><i class="bi bi-check2"></i> Valider les offres soumises par les entreprises</li>
+          <li><i class="bi bi-check2"></i> Planifier les soutenances</li>
+          <li><i class="bi bi-check2"></i> Superviser l'ensemble de la plateforme</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="card feature-card lift reveal">
+        <div class="feature-icon"><i class="bi bi-people"></i></div>
+        <h3>Jury</h3>
+        <ul class="role-list">
+          <li><i class="bi bi-check2"></i> Consulter les soutenances planifiées</li>
+          <li><i class="bi bi-check2"></i> Accéder aux dossiers et livrables</li>
+          <li><i class="bi bi-check2"></i> Saisir les notes et remarques</li>
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
 
 {# ================= BIENTÔT ================= #}
-<section id="bientot" class="mb-5">
-  <div class="text-center mb-4">
-    <div class="section-eyebrow mb-1">Feuille de route</div>
-    <h2 class="section-title h1 mb-2">Bientôt : aide à la décision</h2>
-    <p class="text-muted mb-0">Des outils intelligents pour assister étudiants et encadrants.</p>
+<section id="bientot" class="mb-5 pb-2">
+  <div class="section-head reveal">
+    <div class="eyebrow">Feuille de route</div>
+    <h2>Bientôt : aide à la décision</h2>
+    <p>Des outils intelligents pour assister étudiants et encadrants.</p>
   </div>
-  <div class="row g-3">
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
-      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
-      <div class="fw-semibold"><i class="bi bi-magic app-accent-text"></i> Matching CV / offres</div>
-      <div class="text-muted small mt-1">Suggestion automatique des offres adaptées à votre profil.</div>
-    </div></div></div>
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
-      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
-      <div class="fw-semibold"><i class="bi bi-shield-exclamation app-accent-text"></i> Indicateur de risque</div>
-      <div class="text-muted small mt-1">Repérage des projets susceptibles de prendre du retard.</div>
-    </div></div></div>
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
-      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
-      <div class="fw-semibold"><i class="bi bi-files app-accent-text"></i> Similarité des rapports</div>
-      <div class="text-muted small mt-1">Comparaison des versions d'un même livrable.</div>
-    </div></div></div>
-    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
-      <span class="badge text-bg-info rounded-pill mb-2">Bientôt</span>
-      <div class="fw-semibold"><i class="bi bi-search app-accent-text"></i> Détection d'anomalies</div>
-      <div class="text-muted small mt-1">Alerte sur les dépôts ou notes inhabituels.</div>
-    </div></div></div>
+
+  <div class="row g-4">
+    <div class="col-6 col-lg-3">
+      <div class="card feature-card lift reveal">
+        <span class="soon-pill">Bientôt</span>
+        <h3><i class="bi bi-magic me-1 text-primary"></i> Matching CV / offres</h3>
+        <p>Suggestion automatique des offres adaptées à votre profil.</p>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card feature-card lift reveal">
+        <span class="soon-pill">Bientôt</span>
+        <h3><i class="bi bi-shield-exclamation me-1 text-primary"></i> Indicateur de risque</h3>
+        <p>Repérage des projets susceptibles de prendre du retard.</p>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card feature-card lift reveal">
+        <span class="soon-pill">Bientôt</span>
+        <h3><i class="bi bi-files me-1 text-primary"></i> Similarité des rapports</h3>
+        <p>Comparaison des versions d'un même livrable.</p>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card feature-card lift reveal">
+        <span class="soon-pill">Bientôt</span>
+        <h3><i class="bi bi-search me-1 text-primary"></i> Détection d'anomalies</h3>
+        <p>Alerte sur les dépôts ou notes inhabituels.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 {# ================= CTA ================= #}
-<section class="cta-band p-4 p-lg-5 mb-2">
-  <div class="row align-items-center g-3">
+<section class="cta-panel reveal">
+  <div class="cta-inner row align-items-center g-4">
     <div class="col-lg-8">
-      <h2 class="h2 fw-bold mb-1">Prêt à démarrer votre projet ?</h2>
-      <p class="mb-0 opacity-75">Rejoignez la plateforme et centralisez tout votre parcours stage &amp; PFE.</p>
+      <h2 class="mb-2">Prêt à démarrer votre projet ?</h2>
+      <p class="mb-0">Rejoignez la plateforme et centralisez tout votre parcours stage &amp; PFE.</p>
     </div>
     <div class="col-lg-4 text-lg-end">
       {% if user.is_authenticated %}

@@ -37,6 +37,8 @@
   </script>
 
   {% block extra_head %}{% endblock %}
+
+  <noscript><style>.reveal { opacity: 1; transform: none; }</style></noscript>
 </head>
 <body data-authenticated="{{ user.is_authenticated|yesno:'1,0' }}"
       data-set-theme-url="{% url 'accounts:set_theme' %}">
