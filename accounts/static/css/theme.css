@@ -13,18 +13,33 @@
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --bs-font-sans-serif: var(--app-font);
 
-  --app-radius: 0.9rem;
-  --app-radius-sm: 0.6rem;
+  /* Shape ---------------------------------------------------------------- */
+  --app-radius-sm: 0.625rem;
+  --app-radius: 0.875rem;
+  --app-radius-lg: 1.25rem;
   --app-sidebar-width: 264px;
-  --app-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.08);
-  --app-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
-  --app-shadow-hover: 0 18px 40px -20px rgba(15, 23, 42, 0.45);
+  --app-container: 1140px;
+
+  /* Elevation — soft, diffuse, never harsh ------------------------------ */
+  --app-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 1px 3px rgba(16, 24, 40, 0.06);
+  --app-shadow: 0 4px 14px -6px rgba(16, 24, 40, 0.1),
+    0 1px 3px rgba(16, 24, 40, 0.04);
+  --app-shadow-hover: 0 18px 40px -18px rgba(16, 24, 40, 0.22);
+
+  /* Motion -------------------------------------------------------------- */
+  --app-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --app-duration: 0.45s;
+  --app-duration-fast: 0.18s;
+
+  /* Surfaces ------------------------------------------------------------ */
+  --app-page: #fafafa;
+  --app-border: rgba(16, 24, 40, 0.08);
 
   /* Accent defaults (blue) — overridden by [data-accent] below. */
   --app-accent: #2563eb;
   --app-accent-rgb: 37, 99, 235;
-  --app-accent-soft: rgba(var(--app-accent-rgb), 0.1);
+  --app-accent-soft: rgba(var(--app-accent-rgb), 0.09);
 }
 
 html[data-accent="blue"] {
@@ -48,6 +63,8 @@ html[data-accent="orange"] {
 }
 
 [data-bs-theme="dark"] {
+  --app-page: var(--bs-body-bg);
+  --app-border: rgba(255, 255, 255, 0.08);
   --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --app-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.8);
   --app-shadow-hover: 0 20px 44px -22px rgba(0, 0, 0, 0.85);
@@ -71,17 +88,39 @@ html[data-accent="orange"] {
 /* --------------------------------------------------------------------------
    2. Base
    -------------------------------------------------------------------------- */
+html { scroll-behavior: smooth; }
+
 body {
   font-family: var(--app-font);
-  background-color: var(--bs-body-bg);
+  background-color: var(--app-page);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a { text-decoration: none; }
 
+h1, h2, h3, h4 {
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+::selection { background: rgba(var(--app-accent-rgb), 0.18); }
+
 .app-accent-text { color: var(--app-accent) !important; }
 
 /* Buttons / focus rings that Bootstrap generates with fixed colors. */
+.btn {
+  border-radius: var(--app-radius-sm);
+  font-weight: 600;
+  transition: transform var(--app-duration-fast) var(--app-ease),
+    box-shadow var(--app-duration-fast) var(--app-ease),
+    background-color var(--app-duration-fast) ease,
+    border-color var(--app-duration-fast) ease,
+    color var(--app-duration-fast) ease;
+}
+.btn:active { transform: translateY(1px); }
+
 .btn-primary {
   --bs-btn-bg: var(--app-accent);
   --bs-btn-border-color: var(--app-accent);
@@ -138,12 +177,15 @@ a { text-decoration: none; }
 
 /* Cards & tables ---------------------------------------------------------- */
 .card {
-  border: 1px solid var(--bs-border-color-translucent);
+  border: 1px solid var(--app-border);
   border-radius: var(--app-radius);
   box-shadow: var(--app-shadow-sm);
 }
 
-.card-hover { transition: transform 0.16s ease, box-shadow 0.16s ease; }
+.card-hover {
+  transition: transform var(--app-duration-fast) var(--app-ease),
+    box-shadow var(--app-duration-fast) var(--app-ease);
+}
 .card-hover:hover {
   transform: translateY(-3px);
   box-shadow: var(--app-shadow-hover);
@@ -259,7 +301,11 @@ a { text-decoration: none; }
 
 .app-content {
   flex-grow: 1;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem 3rem;
+}
+
+@media (min-width: 992px) {
+  .app-content { padding: 2.5rem 2.75rem 4rem; }
 }
 
 .app-topbar {
@@ -322,6 +368,8 @@ a { text-decoration: none; }
 /* --------------------------------------------------------------------------
    4. Public pages
    -------------------------------------------------------------------------- */
+.public-container { max-width: var(--app-container); }
+
 .public-navbar {
   background: color-mix(in srgb, var(--bs-body-bg) 88%, transparent);
   backdrop-filter: blur(10px);
@@ -470,7 +518,74 @@ a { text-decoration: none; }
   .landing-hero { padding: 2rem 1.25rem; }
 }
 
+/* --------------------------------------------------------------------------
+   7. Design-refresh primitives (shared by the redesigned pages)
+   -------------------------------------------------------------------------- */
+
+/* Fade-in on load / on scroll. JS adds .is-visible (see static/js/ui.js). */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity var(--app-duration) var(--app-ease),
+    transform var(--app-duration) var(--app-ease);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+.reveal[data-delay="1"] { transition-delay: 0.06s; }
+.reveal[data-delay="2"] { transition-delay: 0.12s; }
+.reveal[data-delay="3"] { transition-delay: 0.18s; }
+.reveal[data-delay="4"] { transition-delay: 0.24s; }
+
+/* Short hand for a hover lift on cards/tiles. */
+.lift {
+  transition: transform var(--app-duration-fast) var(--app-ease),
+    box-shadow var(--app-duration-fast) var(--app-ease),
+    border-color var(--app-duration-fast) ease;
+}
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--app-shadow-hover);
+  border-color: color-mix(in srgb, var(--app-accent) 22%, var(--app-border));
+}
+
+/* Numerals that should not jitter while animating. */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Calm section rhythm. */
+.section-space { padding-block: clamp(3rem, 6vw, 5rem); }
+
+/* Small uppercase label above a section title. */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-accent);
+}
+
+/* Hairline separator that works in both themes. */
+.divider-soft {
+  height: 1px;
+  border: 0;
+  background: var(--app-border);
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .card-hover,
-  .app-sidebar { transition: none; }
+  .lift,
+  .reveal,
+  .app-sidebar {
+    transition: none;
+  }
+  .reveal,
+  .lift:hover,
+  .card-hover:hover {
+    transform: none;
+    opacity: 1;
+  }
 }

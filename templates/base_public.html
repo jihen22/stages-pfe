@@ -4,16 +4,16 @@
   {% include "partials/_public_navbar.html" %}
 
   <main class="public-main">
-    <div class="container py-4 py-lg-5">
+    <div class="container public-container py-4 py-lg-5">
       {% include "partials/_flash_messages.html" %}
       {% block content %}{% endblock %}
     </div>
   </main>
 
-  <footer class="public-footer border-top mt-5 py-4">
-    <div class="container">
+  <footer class="public-footer border-top mt-5 py-3">
+    <div class="container public-container">
       {% block footer %}
-        <div class="row g-3 align-items-center">
+        <div class="row g-4 align-items-center">
           <div class="col-md-6">
             <div class="fw-bold">
               <i class="bi bi-mortarboard-fill app-accent-text"></i> Stages &amp; PFE
