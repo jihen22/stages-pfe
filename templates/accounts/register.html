@@ -1,16 +1,38 @@
 {% extends "base_public.html" %}
 
-{% block title %}Inscription étudiant{% endblock %}
+{% block title %}Inscription{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7 col-lg-6">
     <div class="card">
       <div class="card-body p-4">
-        <h1 class="h4 mb-1 text-center">Inscription étudiant</h1>
+        <h1 class="h4 mb-1 text-center">Inscription</h1>
         <p class="text-muted text-center small mb-4">
-          Créez votre compte pour candidater aux offres.
+          {% if type_compte == 'encadrant_pro' %}
+            Créez votre compte pour publier des offres de stage et de PFE.
+          {% else %}
+            Créez votre compte pour candidater aux offres.
+          {% endif %}
         </p>
+
+        {# Choix du type de compte #}
+        <ul class="nav nav-pills nav-fill mb-4">
+          <li class="nav-item">
+            <a class="nav-link {% if type_compte != 'encadrant_pro' %}active{% endif %}"
+               href="{% url 'accounts:register' %}"
+               {% if type_compte != 'encadrant_pro' %}aria-current="page"{% endif %}>
+              <i class="bi bi-mortarboard"></i> Étudiant
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if type_compte == 'encadrant_pro' %}active{% endif %}"
+               href="{% url 'accounts:register_encadrant_pro' %}"
+               {% if type_compte == 'encadrant_pro' %}aria-current="page"{% endif %}>
+              <i class="bi bi-briefcase"></i> Encadrant professionnel
+            </a>
+          </li>
+        </ul>
 
         <form method="post" novalidate>
           {% csrf_token %}

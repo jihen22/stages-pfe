@@ -145,3 +145,38 @@ def create_student_profile(sender, instance, created, **kwargs):
     """Create an empty ``ProfilEtudiant`` for every new student account."""
     if created and instance.role == User.Role.ETUDIANT:
         ProfilEtudiant.objects.get_or_create(user=instance)
+
+
+class ProfilEncadrantPro(models.Model):
+    """Informations de l'encadrant professionnel : son entreprise et son poste."""
+
+    COMPLETION_FIELDS = ('entreprise', 'poste', 'secteur', 'ville', 'site_web',
+                         'telephone', 'presentation')
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profil_encadrant_pro',
+        verbose_name='Encadrant professionnel',
+    )
+    entreprise = models.CharField('Entreprise', max_length=150)
+    poste = models.CharField('Poste', max_length=150)
+    telephone = models.CharField('Téléphone', max_length=30, blank=True)
+    secteur = models.CharField("Secteur d'activité", max_length=120, blank=True)
+    ville = models.CharField('Ville', max_length=80, blank=True)
+    site_web = models.URLField('Site web', blank=True)
+    presentation = models.TextField("Présentation de l'entreprise", blank=True)
+
+    class Meta:
+        verbose_name = 'profil encadrant professionnel'
+        verbose_name_plural = 'profils encadrants professionnels'
+
+    def __str__(self):
+        return f'{self.user} — {self.entreprise}'
+
+    @property
+    def completion(self):
+        """Pourcentage (0-100) de champs remplis."""
+        total = len(self.COMPLETION_FIELDS)
+        filled = sum(1 for field in self.COMPLETION_FIELDS if getattr(self, field))
+        return round(filled * 100 / total)

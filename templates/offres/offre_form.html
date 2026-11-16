@@ -15,24 +15,46 @@
           {% if form.instance.pk %}Modifier l'offre{% else %}Nouvelle offre{% endif %}
         </h1>
 
+        {# Barre de progression : le JS met "active" sur l'étape courante #}
+        <ul class="nav nav-pills nav-fill mb-4">
+          <li class="nav-item"><span class="nav-link active" data-step-tab="1">1. Le poste</span></li>
+          <li class="nav-item"><span class="nav-link" data-step-tab="2">2. Les détails</span></li>
+          <li class="nav-item"><span class="nav-link" data-step-tab="3">3. Validation</span></li>
+        </ul>
+
         <form method="post" novalidate>
           {% csrf_token %}
-          {% for field in form %}
-            <div class="mb-3">
-              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-              {{ field }}
-              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-              {% for error in field.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-          {% endfor %}
 
-          <div class="d-flex gap-2">
+          {# ÉTAPE 1 #}
+          <div data-step="1">
+            <div class="alert alert-light border">
+              <i class="bi bi-building"></i>
+              Proposée par <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+            </div>
+            {% include "offres/_champ.html" with field=form.titre %}
+            {% include "offres/_champ.html" with field=form.type %}
+          </div>
+
+          {# ÉTAPE 2 #}
+          <div data-step="2" class="d-none">
+            {% include "offres/_champ.html" with field=form.description %}
+            {% include "offres/_champ.html" with field=form.competences %}
+            {% include "offres/_champ.html" with field=form.duree %}
+          </div>
+
+          {# ÉTAPE 3 : récapitulatif rempli par le JS #}
+          <div data-step="3" class="d-none">
+            <p>Vérifiez votre offre. Une fois soumise, elle sera relue et validée avant d'être visible par les étudiants.</p>
+            <dl class="row" id="recap"></dl>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+            <button type="button" id="btn-prev" class="btn btn-outline-secondary d-none">Retour</button>
             <button type="submit" name="action" value="brouillon" class="btn btn-outline-secondary">
               <i class="bi bi-save"></i> Enregistrer (brouillon)
             </button>
-            <button type="submit" name="action" value="soumettre" class="btn btn-primary">
+            <button type="button" id="btn-next" class="btn btn-primary">Suivant</button>
+            <button type="submit" id="btn-submit" name="action" value="soumettre" class="btn btn-primary d-none">
               <i class="bi bi-send"></i> Soumettre à validation
             </button>
           </div>
@@ -41,4 +63,54 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  const steps = document.querySelectorAll("[data-step]");
+  const tabs  = document.querySelectorAll("[data-step-tab]");
+  const prev = document.getElementById("btn-prev");
+  const next = document.getElementById("btn-next");
+  const submit = document.getElementById("btn-submit");
+  const total = steps.length;
+  let current = 1;
+
+  function show(n) {
+    current = n;
+    steps.forEach(s => s.classList.toggle("d-none", Number(s.dataset.step) !== n));
+    tabs.forEach(t => t.classList.toggle("active", Number(t.dataset.stepTab) === n));
+    prev.classList.toggle("d-none", n === 1);
+    next.classList.toggle("d-none", n === total);
+    submit.classList.toggle("d-none", n !== total);
+    if (n === total) buildRecap();
+  }
+
+  // Étape 3 : copie les libellés et les valeurs saisies aux étapes 1 et 2
+  function buildRecap() {
+    const recap = document.getElementById("recap");
+    recap.replaceChildren();
+    document.querySelectorAll("[data-step='1'] .mb-3, [data-step='2'] .mb-3").forEach(block => {
+      const label = block.querySelector("label");
+      const input = block.querySelector("input, select, textarea");
+      if (!label || !input) return;
+      const value = input.tagName === "SELECT"
+        ? (input.selectedOptions[0]?.textContent || "") : input.value;
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.className = "col-sm-4";
+      dd.className = "col-sm-8";
+      dd.style.whiteSpace = "pre-line";
+      dt.textContent = label.textContent;
+      dd.textContent = value.trim() || "Non renseigné";
+      recap.append(dt, dd);
+    });
+  }
+
+  next.addEventListener("click", () => show(current + 1));
+  prev.addEventListener("click", () => show(current - 1));
+
+  // Si Django renvoie une erreur, on rouvre l'étape qui la contient
+  const err = document.querySelector("[data-step] .text-danger");
+  show(err ? Number(err.closest("[data-step]").dataset.step) : 1);
+})();
+</script>
 {% endblock %}
