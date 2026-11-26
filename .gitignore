@@ -50,3 +50,7 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+
+ia/data/raw/
+ia/data/real/
+generated_credentials.csv
