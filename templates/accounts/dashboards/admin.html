@@ -8,6 +8,14 @@
   <p class="text-muted mb-0">Vue d'ensemble de la plateforme et planification des soutenances.</p>
 </div>
 
+{% if nb_conflits %}
+  <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2" role="alert">
+    <i class="bi bi-exclamation-octagon"></i>
+    <span><strong>{{ nb_conflits }}</strong> conflit{{ nb_conflits|pluralize }} dans le planning des soutenances.</span>
+    <a href="{% url 'soutenances:conflits' %}" class="btn btn-sm btn-danger ms-auto">Résoudre</a>
+  </div>
+{% endif %}
+
 <div class="row g-3 mb-4">
   <div class="col-6 col-lg-3">
     {% include "partials/_stat_card.html" with label="Offres en validation" value=offres_en_validation icon="patch-check" color="warning" %}

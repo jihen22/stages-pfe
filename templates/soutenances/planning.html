@@ -21,6 +21,14 @@
   </div>
 </div>
 
+{% if nb_conflits %}
+  <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2" role="alert">
+    <i class="bi bi-exclamation-octagon"></i>
+    <span><strong>{{ nb_conflits }}</strong> conflit{{ nb_conflits|pluralize }} de planning (salle ou jury réservé deux fois).</span>
+    <a href="{% url 'soutenances:conflits' %}" class="btn btn-sm btn-danger ms-auto">Résoudre</a>
+  </div>
+{% endif %}
+
 {# Upcoming sessions: one grid per day (slots x rooms) #}
 {% for journee in journees %}
   <div class="card mb-4">
@@ -43,9 +51,10 @@
             <tr>
               <th scope="row" class="text-nowrap">{{ ligne.creneau.debut|date:"H:i" }}–{{ ligne.creneau.fin|date:"H:i" }}</th>
               {% for cellule in ligne.cellules %}
-                <td>
+                <td{% if cellule|length > 1 %} class="table-danger"{% endif %}>
                   {% for s in cellule %}
                     <div class="{% if not forloop.first %}mt-1 pt-1 border-top{% endif %}">
+                      {% if s.pk in en_conflit %}<span class="badge text-bg-danger mb-1"><i class="bi bi-exclamation-triangle"></i> Conflit</span>{% endif %}
                       <div class="fw-semibold">{{ s.projet.etudiant.get_full_name|default:s.projet.etudiant.username }}</div>
                       <div class="text-muted text-truncate" style="max-width: 14rem;" title="{{ s.projet.sujet }}">{{ s.projet.sujet }}</div>
                     </div>
@@ -81,6 +90,7 @@
             <th>Étudiant</th>
             <th>Membres du jury</th>
             <th class="text-end">Moyenne</th>
+            <th class="text-end"><span class="visually-hidden">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -142,6 +152,16 @@
                   </span>
                 {% else %}
                   <span class="badge rounded-pill text-bg-light border text-muted">Non notée</span>
+                {% endif %}
+              </td>
+              <td class="text-end text-nowrap">
+                {% if soutenance.pk in en_conflit %}
+                  <span class="badge text-bg-danger me-1" title="Salle ou jury réservé deux fois">Conflit</span>
+                {% endif %}
+                {% if soutenance.projet.status == 'PLANIFIE' %}
+                  <a href="{% url 'soutenances:modifier' soutenance.pk %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Modifier
+                  </a>
                 {% endif %}
               </td>
             </tr>

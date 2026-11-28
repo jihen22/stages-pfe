@@ -9,32 +9,47 @@ from django.urls import reverse
 from accounts.mixins import role_required
 from accounts.models import User
 from notifications.services import notify
+from pfe.models import ProjetPFE
 from pfe.workflow import ETATS_NOTATION_OUVERTE, TransitionInterdite, appliquer, peut
 
-from .forms import CreneauForm, JourneeCreneauxForm, NoteSoutenanceForm, SalleForm, SoutenanceForm
+from .conflits import alternatives, conflits_pour, detecter_conflits, ids_en_conflit
+from .forms import (
+    CreneauForm, JourneeCreneauxForm, ModifierSoutenanceForm, NoteSoutenanceForm, SalleForm,
+    SoutenanceForm,
+)
 from .models import Creneau, NoteSoutenance, Salle, Soutenance
 
 
-def _notify_soutenance(soutenance):
-    """Notify the student and every jury member about a newly scheduled defense."""
+def _notify_soutenance(soutenance, deplacee=False, anciens_membres=()):
+    """Notify the student and every jury member about a scheduled (or moved) defense.
+
+    ``anciens_membres`` are jury members removed by a change: they are told too.
+    """
     debut = timezone.localtime(soutenance.creneau.debut)
     fin = timezone.localtime(soutenance.creneau.fin)
     date_str = f"{debut:%d/%m/%Y} de {debut:%H:%M} à {fin:%H:%M}"
+    verbe = 'a été déplacée' if deplacee else 'a été planifiée'
+    sujet = soutenance.projet.sujet
 
     etudiant = getattr(soutenance.projet, 'etudiant', None)
     if etudiant:
         notify(
             etudiant,
-            f"Votre soutenance pour le PFE « {soutenance.projet.sujet} » a été planifiée le {date_str} en salle {soutenance.salle}.",
+            f"Votre soutenance pour le PFE « {sujet} » {verbe} : le {date_str} en salle {soutenance.salle}.",
             reverse('soutenances:ma_soutenance'),
         )
 
-    for member in soutenance.jury.all():
+    membres = list(soutenance.jury.all())
+    for member in membres:
         notify(
             member,
-            f"Vous avez été désigné(e) membre du jury pour la soutenance de « {soutenance.projet.sujet} » le {date_str} (salle {soutenance.salle}).",
+            f"Soutenance de « {sujet} » ({'déplacée' if deplacee else 'jury'}) : le {date_str}, salle {soutenance.salle}.",
             reverse('soutenances:mes_soutenances'),
         )
+    for member in anciens_membres:
+        if member not in membres:
+            notify(member, f"Vous ne faites plus partie du jury de la soutenance de « {sujet} ».",
+                   reverse('soutenances:mes_soutenances'))
 
 
 def _cloturer_si_complet(soutenance, auteur):
@@ -187,6 +202,7 @@ def planning(request):
         .prefetch_related('jury', 'notes')
         .order_by('creneau__debut')
     )
+    conflits = detecter_conflits()
     return render(
         request,
         'soutenances/planning.html',
@@ -194,6 +210,8 @@ def planning(request):
             'soutenances': soutenances,
             'journees': _grille_par_jour(soutenances),
             'nb_creneaux_libres': Creneau.objects.filter(debut__gte=timezone.now()).count(),
+            'nb_conflits': len(conflits),
+            'en_conflit': ids_en_conflit(conflits),
         },
     )
 
@@ -248,25 +266,107 @@ def planifier_soutenance(request):
                         appliquer(projet, 'planifier', auteur=request.user)
                 except TransitionInterdite as exc:
                     form.add_error('projet', str(exc))
-                    return render(request, 'soutenances/planifier.html', {'form': form})
-                _notify_soutenance(soutenance)
-                messages.success(
-                    request,
-                    f"La soutenance pour « {soutenance.projet.sujet} » a été planifiée avec succès.",
-                )
-                return redirect('soutenances:planning')
+                else:
+                    _notify_soutenance(soutenance)
+                    messages.success(
+                        request,
+                        f"La soutenance pour « {soutenance.projet.sujet} » a été planifiée avec succès.",
+                    )
+                    return redirect('soutenances:planning')
     else:
         form = SoutenanceForm()
+    return _rendu_formulaire(request, form)
 
-    return render(
-        request,
-        'soutenances/planifier.html',
-        {
-            'form': form,
-            'aucun_creneau': not form.fields['creneau'].queryset.exists(),
-            'aucune_salle': not form.fields['salle'].queryset.exists(),
-        },
+
+def _rendu_formulaire(request, form, soutenance=None):
+    """Planning / editing page, with free alternatives when the choice conflicts."""
+    suggestions = []
+    if form.conflits:
+        suggestions = alternatives(
+            form.cleaned_data.get('jury') or [],
+            souhait=form.cleaned_data['creneau'].debut,
+            salle_preferee=form.cleaned_data.get('salle'),
+            exclure=soutenance,
+        )
+    return render(request, 'soutenances/planifier.html', {
+        'form': form,
+        'soutenance': soutenance,
+        'suggestions': suggestions,
+        'aucun_creneau': not form.fields['creneau'].queryset.exists(),
+        'aucune_salle': not form.fields['salle'].queryset.exists(),
+    })
+
+
+def _page_suivante(request, defaut):
+    """Where to go back after a change: only the two known pages (no arbitrary URL)."""
+    pages = {'conflits': 'soutenances:conflits', 'planning': 'soutenances:planning'}
+    return pages.get(request.POST.get('suivant'), defaut)
+
+
+def _soutenance_modifiable(pk):
+    """A defense the admin may still move: its project is « soutenance planifiée »."""
+    return get_object_or_404(
+        Soutenance.objects.select_related('projet', 'projet__etudiant', 'creneau', 'salle')
+        .filter(projet__status=ProjetPFE.Status.PLANIFIE),
+        pk=pk,
     )
+
+
+@role_required(User.Role.ADMIN)
+def modifier_soutenance(request, pk):
+    """Move a planned defense to another slot / room, or change its jury (item 20)."""
+    soutenance = _soutenance_modifiable(pk)
+    anciens_membres = list(soutenance.jury.all())
+    if request.method == 'POST':
+        form = ModifierSoutenanceForm(request.POST, instance=soutenance)
+        if form.is_valid():
+            soutenance = form.save()
+            _notify_soutenance(soutenance, deplacee=True, anciens_membres=anciens_membres)
+            messages.success(request, f"La soutenance de « {soutenance.projet.sujet} » a été modifiée.")
+            return redirect(_page_suivante(request, 'soutenances:planning'))
+    else:
+        form = ModifierSoutenanceForm(instance=soutenance)
+    return _rendu_formulaire(request, form, soutenance)
+
+
+@role_required(User.Role.ADMIN)
+@require_POST
+def deplacer_soutenance(request, pk):
+    """One-click move to a suggested free slot and room (same jury)."""
+    soutenance = _soutenance_modifiable(pk)
+    creneau = get_object_or_404(Creneau, pk=request.POST.get('creneau'), debut__gte=timezone.now())
+    salle = get_object_or_404(Salle, pk=request.POST.get('salle'), active=True)
+    jury = list(soutenance.jury.all())
+    conflits = conflits_pour(creneau, salle, jury, exclure=soutenance)
+    if conflits:
+        messages.error(request, "Ce créneau n'est plus libre : " + " ".join(c.message for c in conflits))
+    else:
+        soutenance.creneau = creneau
+        soutenance.salle = salle
+        soutenance.save(update_fields=['creneau', 'salle'])
+        _notify_soutenance(soutenance, deplacee=True)
+        messages.success(
+            request, f"Soutenance de « {soutenance.projet.sujet} » déplacée : {creneau}, {salle}.")
+    return redirect(_page_suivante(request, 'soutenances:conflits'))
+
+
+@role_required(User.Role.ADMIN)
+def conflits(request):
+    """Every scheduling conflict of the upcoming planning, with ways to resolve it."""
+    lignes = []
+    for conflit in detecter_conflits():
+        # Propose to move the later defense (the other one keeps its place).
+        a_deplacer = conflit.autre
+        lignes.append({
+            'conflit': conflit,
+            'a_deplacer': a_deplacer,
+            'modifiable': a_deplacer.projet.status == ProjetPFE.Status.PLANIFIE,
+            'suggestions': alternatives(
+                list(a_deplacer.jury.all()), souhait=a_deplacer.creneau.debut,
+                salle_preferee=a_deplacer.salle, exclure=a_deplacer, limite=3,
+            ),
+        })
+    return render(request, 'soutenances/conflits.html', {'lignes': lignes})
 
 
 # ---------------------------------------------------------------------------

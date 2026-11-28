@@ -1,18 +1,18 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 19 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 20 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 211 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 232 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
 | accounts | 38 |
 | pfe | 103 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py` + 19 in `test_suggestion.py` + 16 in `test_versions.py`) |
-| soutenances | 38 (17 in `tests.py` + 21 in `test_salles_creneaux.py`) |
+| soutenances | 59 (17 in `tests.py` + 21 in `test_salles_creneaux.py` + 21 in `test_conflits.py`) |
 | notifications | 10 |
 | candidatures | 3 |
 | offres | 19 |
@@ -31,19 +31,19 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **50 j** | 168 j | **29.8 %** |
-| Non-AI items | **50 j** | 107 j | **46.7 %** |
+| All items | **55 j** | 168 j | **32.7 %** |
+| Non-AI items | **55 j** | 107 j | **51.4 %** |
 
-DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) = 50 j.
+DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) + 20 (5 j) = 55 j.
 PARTIAL items count for 0 j.
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 13 | 1, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19 |
+| DONE | 14 | 1, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19, 20 |
 | PARTIAL | 6 | 2, 21, 22, 35, 36, 38 |
-| NOT STARTED | 20 | 9, 11, 15, 17, 18, 20, 23, 24–34, 37, 39 |
+| NOT STARTED | 19 | 9, 11, 15, 17, 18, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
 ## Detail per item
@@ -69,7 +69,7 @@ PARTIAL items count for 0 j.
 | 17 | Admin generates documents (agreement, certificate, minutes) | 5 | Web | NOT STARTED | No document model, no PDF library in `requirements.txt` (only `Django==5.2.18`). The wording only appears in marketing text, `templates/home.html:165`. | Everything. |
 | 18 | Company supervisor approves the generated agreement | 2 | Web | NOT STARTED | Depends on 17. No agreement model. | Everything. |
 | 19 | Plan defenses (juries, rooms, time slots) | 6 | Web | **DONE** | Models: `Salle` and `Creneau` (end after start, unique), `Soutenance.creneau` / `Soutenance.salle` foreign keys (`soutenances/models.py:8-110`), migration `soutenances/migrations/0002_salles_creneaux.py` (converts existing defenses: room names → rooms, dates → 1-hour slots). Rooms and slots page (admin only): `soutenances/views.py:277-347` (`ressources`, `basculer_salle`, `supprimer_creneau`), `templates/soutenances/ressources.html` (add / deactivate rooms, add one slot, generate a day of slots with duration and break). Planning: `SoutenanceForm` (finished project + upcoming slot + active room + jury), `soutenances/views.py:183-232` (grid per day: slots × rooms), `templates/soutenances/planning.html`, `planifier.html`. Tests: `soutenances/test_salles_creneaux.py` (21 tests) | Double bookings (same room / jury / student in one slot) are item 20. |
-| 20 | Detect / fix scheduling conflicts | 5 | Web | NOT STARTED | `SoutenanceForm` (`soutenances/forms.py:11-48`) has no overlap check for room, jury or time. Only "one defense per project" is blocked (`soutenances/views.py:176`). | Everything. |
+| 20 | Detect / fix scheduling conflicts | 5 | Web | **DONE** | Detection: `soutenances/conflits.py` (`conflits_pour`: same room or same jury member in overlapping slots; `detecter_conflits`: whole upcoming planning; `alternatives`: free slot + room for the whole jury, closest first). Prevention: `SoutenanceForm.clean` refuses a conflicting plan or change and the page proposes alternatives (`soutenances/forms.py:54`, `soutenances/views.py:281`). Resolution: `modifier_soutenance` (move / change jury, participants notified, only « soutenance planifiée »), `deplacer_soutenance` (one-click move to a suggestion, re-checked), `conflits` page (`soutenances/views.py:300-370`, `templates/soutenances/conflits.html`). Visibility: conflict cells and badges in `templates/soutenances/planning.html`, alert with count on the planning page and the admin dashboard. Tests: `soutenances/test_conflits.py` (21 tests) | — |
 | 21 | Jury: notice, schedule, reports, grades | 5 | Web | PARTIAL | Schedule: `soutenances/views.py:49-75`, `templates/soutenances/mes_soutenances.html`. Grades: `soutenances/models.py:44-73`, `soutenances/views.py:78-149`, `saisir_note.html`. Tests `soutenances/tests.py:128-188` | No notice (nothing to view/download). The jury cannot open the student's reports (no link to `Livrable` in `templates/soutenances/`). |
 | 22 | Student: defense schedule + notice | 2 | Web | PARTIAL | `soutenances/views.py:33-46`, `templates/soutenances/ma_soutenance.html` (date, room, jury, average), tests `soutenances/tests.py:113-126` | No notice document. |
 | 23 | Log of critical actions | 3 | Web | NOT STARTED | No log/audit model. Django admin's `LogEntry` does not track the app's views. | Everything. |
@@ -85,25 +85,25 @@ PARTIAL items count for 0 j.
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 211 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 232 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
 
 ## Next 5 non-AI items to build (dependency order)
 
-1. **Item 20: detect and fix scheduling conflicts** (5 j).
-   - Uses the rooms and slots from item 19: same room, jury member or student twice in overlapping slots.
-2. **Item 17: admin generates documents (agreement, certificate, minutes)** (5 j).
-   - The certificate and minutes depend on the « soutenu » state and the grades (items 14, 21).
-3. **Item 18: company supervisor approves the generated agreement** (2 j).
+1. **Item 17: admin generates documents (agreement, certificate, minutes)** (5 j).
+   - The minutes use the defense's slot, room, jury and grades (items 19, 21); the certificate needs « soutenu » (item 14).
+2. **Item 18: company supervisor approves the generated agreement** (2 j).
    - Needs the agreement from item 17.
-4. **Item 21: jury notice, schedule, reports and grades** (5 j).
+3. **Item 21: jury notice, schedule, reports and grades** (5 j).
    - The notice uses the slot and room (item 19); the reports use the latest approved versions (item 12).
-5. **Item 22: student's defense schedule and notice** (2 j).
+4. **Item 22: student's defense schedule and notice** (2 j).
    - Same notice as item 21, for the student.
+5. **Item 11: discussion space between student and supervisor** (4 j).
+   - Independent; can be done at any time.
 
-After these: 11, 15, 23.
+After these: 15, 23 → 2, 35, 36, 38 → 37 → AI items → 39.
 
 
 ## Change log
@@ -236,3 +236,20 @@ Files changed:
 Checked: migration on a copy of the real database (3 defenses → 3 rooms + 3 slots, same times); « Salles et créneaux », planning grid and planning form read with demo data.
 
 What's left (outside item 19): conflict detection (item 20).
+
+### Item 20: scheduling conflicts detected and resolved (done 2026-11-28)
+
+- **What is a conflict**: two defenses whose slots overlap (also partly, e.g. 09:00–10:00 and 09:30–10:30; back-to-back slots are fine) and that use the same room or share a jury member. A student has only one defense, so students can't be double-booked.
+- **Prevented**: planning or changing a defense into a conflict is refused; the error names the other defense, and the page offers free alternatives (a click fills the slot and room).
+- **Detected**: conflicts that already exist (older data, overlapping slots added by hand) are counted on the planning page and the admin dashboard, flagged in the planning grid, and listed on « Conflits de planning ».
+- **Resolved**: « Modifier » moves a defense or changes its jury; « Déplacer » moves it in one click to a free slot (re-checked at that moment). Student and jury are notified, including removed jury members. Defenses already held can't be moved.
+
+Files changed:
+- Detection and suggestions: `soutenances/conflits.py` (new)
+- Forms, views, URLs: `soutenances/forms.py`, `soutenances/views.py`, `soutenances/urls.py`, `accounts/views.py`
+- Templates: `templates/soutenances/conflits.html` (new), `planifier.html`, `planning.html`, `templates/accounts/dashboards/admin.html`
+- Tests: `soutenances/test_conflits.py` (new)
+
+Checked: with demo data, a defense put into another's slot and room shows 2 conflicts (room + shared jury member) with 3 free alternatives, flagged on the planning page and the admin dashboard.
+
+What's left (outside item 20): two admins saving at the very same moment could still create a conflict (SQLite has no row locks); it would then show up on the conflicts page.

@@ -8,6 +8,7 @@ from accounts.forms import BootstrapFormMixin
 from accounts.models import User
 from pfe.models import ProjetPFE
 
+from .conflits import conflits_pour
 from .models import Creneau, NoteSoutenance, Salle, Soutenance
 
 
@@ -29,6 +30,39 @@ class SoutenanceForm(BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.conflits = []
+        if 'projet' in self.fields:
+            self._limiter_projets()
+
+        # Item 19: upcoming slots and available rooms only (plus the current ones when editing).
+        creneaux = Q(debut__gte=timezone.now())
+        salles = Q(active=True)
+        if self.instance.pk:
+            creneaux |= Q(pk=self.instance.creneau_id)
+            salles |= Q(pk=self.instance.salle_id)
+        self.fields['creneau'].queryset = Creneau.objects.filter(creneaux)
+        self.fields['creneau'].empty_label = '-- Choisir un créneau --'
+        self.fields['salle'].queryset = Salle.objects.filter(salles)
+        self.fields['salle'].empty_label = '-- Choisir une salle --'
+        self.fields['salle'].label_from_instance = (
+            lambda s: f'{s.nom} ({s.batiment}, {s.capacite} places)' if s.batiment else f'{s.nom} ({s.capacite} places)'
+        )
+
+        self.fields['jury'].queryset = User.objects.filter(role=User.Role.JURY)
+        self.fields['jury'].required = True
+
+    def clean(self):
+        cleaned = super().clean()
+        # Item 20: refuse a room or a jury member already busy at an overlapping time.
+        self.conflits = conflits_pour(
+            cleaned.get('creneau'), cleaned.get('salle'), cleaned.get('jury') or [],
+            exclure=self.instance,
+        )
+        for conflit in self.conflits:
+            self.add_error(None, conflit.message)
+        return cleaned
+
+    def _limiter_projets(self):
         # Only finished projects (state machine, pfe/workflow.py) can get a defense.
         projets = ProjetPFE.objects.all()
         if self.instance.pk and self.instance.projet_id:
@@ -41,17 +75,12 @@ class SoutenanceForm(BootstrapFormMixin, forms.ModelForm):
             projets = projets.filter(soutenance__isnull=True, status=ProjetPFE.Status.TERMINE)
         self.fields['projet'].queryset = projets
 
-        # Item 19: upcoming slots and available rooms only.
-        self.fields['creneau'].queryset = Creneau.objects.filter(debut__gte=timezone.now())
-        self.fields['creneau'].empty_label = '-- Choisir un créneau --'
-        self.fields['salle'].queryset = Salle.objects.filter(active=True)
-        self.fields['salle'].empty_label = '-- Choisir une salle --'
-        self.fields['salle'].label_from_instance = (
-            lambda s: f'{s.nom} ({s.batiment}, {s.capacite} places)' if s.batiment else f'{s.nom} ({s.capacite} places)'
-        )
 
-        self.fields['jury'].queryset = User.objects.filter(role=User.Role.JURY)
-        self.fields['jury'].required = True
+class ModifierSoutenanceForm(SoutenanceForm):
+    """Move a planned defense: new slot, room or jury (the project stays the same)."""
+
+    class Meta(SoutenanceForm.Meta):
+        fields = ('creneau', 'salle', 'jury')
 
 
 class SalleForm(BootstrapFormMixin, forms.ModelForm):

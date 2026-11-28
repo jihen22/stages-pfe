@@ -1,12 +1,17 @@
 {% extends "base_app.html" %}
 
-{% block title %}Planifier une soutenance — Administration{% endblock %}
+{% block title %}{% if soutenance %}Modifier une soutenance{% else %}Planifier une soutenance{% endif %} — Administration{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
   <div>
-    <h1 class="h3 mb-1">Planifier une soutenance</h1>
-    <p class="text-muted mb-0">Choisissez un projet terminé, un créneau, une salle et les membres du jury.</p>
+    {% if soutenance %}
+      <h1 class="h3 mb-1">Modifier une soutenance</h1>
+      <p class="text-muted mb-0">Déplacez la soutenance ou changez son jury : les participants seront prévenus.</p>
+    {% else %}
+      <h1 class="h3 mb-1">Planifier une soutenance</h1>
+      <p class="text-muted mb-0">Choisissez un projet terminé, un créneau, une salle et les membres du jury.</p>
+    {% endif %}
   </div>
   <div class="d-flex gap-2">
     <a href="{% url 'soutenances:planning' %}" class="btn btn-outline-secondary btn-sm">
@@ -22,7 +27,7 @@
   <div class="col-lg-8">
     <div class="card">
       <div class="card-header bg-transparent fw-semibold">
-        <i class="bi bi-calendar-plus me-1"></i> Formulaire de planification
+        <i class="bi bi-calendar-plus me-1"></i> {% if soutenance %}Soutenance de « {{ soutenance.projet.sujet }} »{% else %}Formulaire de planification{% endif %}
       </div>
       <div class="card-body">
         <form method="post" novalidate>
@@ -38,11 +43,34 @@
           {% endif %}
 
           {% if form.non_field_errors %}
-            <div class="alert alert-danger mb-3">
+            <div class="alert alert-danger mb-3" role="alert">
+              {% if form.conflits %}<div class="fw-semibold mb-1"><i class="bi bi-exclamation-octagon me-1"></i> Conflit de planning</div>{% endif %}
               {{ form.non_field_errors }}
             </div>
           {% endif %}
 
+          {% if suggestions %}
+            <div class="alert alert-info mb-3">
+              <div class="fw-semibold mb-2"><i class="bi bi-lightbulb me-1"></i> Créneaux libres pour cette salle et ce jury</div>
+              <div class="d-flex flex-wrap gap-2">
+                {% for creneau, salle in suggestions %}
+                  <button type="button" class="btn btn-sm btn-outline-primary js-suggestion"
+                          data-creneau="{{ creneau.pk }}" data-salle="{{ salle.pk }}">
+                    {{ creneau }} · {{ salle.nom }}
+                  </button>
+                {% endfor %}
+              </div>
+              <div class="small text-muted mt-2">Cliquez pour remplir le créneau et la salle, puis enregistrez.</div>
+            </div>
+          {% endif %}
+
+          {% if soutenance %}
+            <input type="hidden" name="suivant" value="{{ request.GET.suivant|default:'planning' }}">
+            <div class="mb-3 p-3 border rounded bg-body-tertiary">
+              <div class="small text-muted">Étudiant</div>
+              <div class="fw-semibold">{{ soutenance.projet.etudiant.get_full_name|default:soutenance.projet.etudiant.username }}</div>
+            </div>
+          {% else %}
           <div class="mb-3">
             <label for="{{ form.projet.id_for_label }}" class="form-label fw-semibold">
               {{ form.projet.label }} <span class="text-danger">*</span>
@@ -53,6 +81,7 @@
               <div class="invalid-feedback d-block">{{ form.projet.errors|first }}</div>
             {% endif %}
           </div>
+          {% endif %}
 
           <div class="row g-3 mb-3">
             <div class="col-md-6">
@@ -101,6 +130,16 @@
             </button>
           </div>
         </form>
+        <script>
+          document.querySelectorAll('.js-suggestion').forEach(function (bouton) {
+            bouton.addEventListener('click', function () {
+              document.getElementById('{{ form.creneau.id_for_label }}').value = bouton.dataset.creneau;
+              document.getElementById('{{ form.salle.id_for_label }}').value = bouton.dataset.salle;
+              document.querySelectorAll('.js-suggestion').forEach(function (b) { b.classList.remove('active'); });
+              bouton.classList.add('active');
+            });
+          });
+        </script>
       </div>
     </div>
   </div>

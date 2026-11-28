@@ -13,6 +13,7 @@ from offres.models import Offre
 from offres.views import offres_a_valider_pour
 from pfe.charge import charge_encadrant
 from pfe.models import ProjetPFE
+from soutenances.conflits import detecter_conflits
 
 from .forms import BootstrapAuthenticationForm, BootstrapPasswordChangeForm, ProfilEtudiantForm, StudentRegistrationForm , EncadrantProRegistrationForm , ProfilEncadrantProForm, UserInfoForm
 from .mixins import role_required
@@ -128,6 +129,7 @@ def dashboard_admin(request):
         'offres_publiees': Offre.objects.filter(status=Offre.Status.PUBLIEE).count(),
         'candidatures_total': Candidature.objects.count(),
         'utilisateurs_total': User.objects.count(),
+        'nb_conflits': len(detecter_conflits()),
     }
     return render(request, 'accounts/dashboards/admin.html', context)
 

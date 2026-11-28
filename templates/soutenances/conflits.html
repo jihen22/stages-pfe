@@ -1,0 +1,82 @@
+{% extends "base_app.html" %}
+
+{% block title %}Conflits de planning — Administration{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h1 class="h3 mb-1">Conflits de planning</h1>
+    <p class="text-muted mb-0">Salles et membres du jury réservés deux fois sur des créneaux qui se chevauchent.</p>
+  </div>
+  <a href="{% url 'soutenances:planning' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-calendar3 me-1"></i> Planning
+  </a>
+</div>
+
+{% for ligne in lignes %}
+  {% with c=ligne.conflit s=ligne.a_deplacer %}
+    <div class="card mb-3 border-danger-subtle">
+      <div class="card-header d-flex flex-wrap align-items-center gap-2">
+        <span class="badge text-bg-danger">
+          {% if c.type == 'SALLE' %}<i class="bi bi-door-closed"></i> Salle{% else %}<i class="bi bi-people"></i> Jury{% endif %}
+        </span>
+        <span class="fw-semibold">
+          {% if c.type == 'SALLE' %}
+            {{ c.soutenance.salle }} réservée deux fois
+          {% else %}
+            {% for m in c.membres %}{{ m.get_full_name|default:m.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            dans deux jurys en même temps
+          {% endif %}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="small text-muted text-uppercase">Garde sa place</div>
+            <div class="fw-semibold">{{ c.soutenance.projet.etudiant.get_full_name|default:c.soutenance.projet.etudiant.username }}</div>
+            <div class="small">{{ c.soutenance.creneau }} · {{ c.soutenance.salle }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted text-uppercase">À déplacer</div>
+            <div class="fw-semibold">{{ s.projet.etudiant.get_full_name|default:s.projet.etudiant.username }}</div>
+            <div class="small">{{ s.creneau }} · {{ s.salle }}</div>
+          </div>
+        </div>
+
+        <hr>
+        {% if ligne.modifiable %}
+          {% if ligne.suggestions %}
+            <div class="small fw-semibold mb-2"><i class="bi bi-lightbulb me-1"></i> Créneaux libres pour la salle et tout le jury :</div>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              {% for creneau, salle in ligne.suggestions %}
+                <form method="post" action="{% url 'soutenances:deplacer' s.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="creneau" value="{{ creneau.pk }}">
+                  <input type="hidden" name="salle" value="{{ salle.pk }}">
+                  <input type="hidden" name="suivant" value="conflits">
+                  <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-right-circle me-1"></i> Déplacer : {{ creneau }} · {{ salle.nom }}
+                  </button>
+                </form>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="small text-muted mb-2">Aucun créneau libre pour ce jury : ajoutez des créneaux ou changez le jury.</div>
+          {% endif %}
+          <a href="{% url 'soutenances:modifier' s.pk %}?suivant=conflits" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i> Modifier (créneau, salle, jury)
+          </a>
+        {% else %}
+          <div class="small text-muted">Cette soutenance a déjà eu lieu : elle ne peut plus être déplacée.</div>
+        {% endif %}
+      </div>
+    </div>
+  {% endwith %}
+{% empty %}
+  <div class="card">
+    <div class="card-body py-5">
+      {% include "partials/_empty_state.html" with icon="check2-circle" title="Aucun conflit" text="Aucune salle ni aucun membre du jury n'est réservé deux fois dans le planning à venir." %}
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

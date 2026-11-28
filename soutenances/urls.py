@@ -12,6 +12,9 @@ urlpatterns = [
     path('planning/', views.planning, name='planning'),
     path('planifier/', views.planifier_soutenance, name='planifier'),
     path('salles-creneaux/', views.ressources, name='ressources'),
+    path('conflits/', views.conflits, name='conflits'),
+    path('<int:pk>/modifier/', views.modifier_soutenance, name='modifier'),
+    path('<int:pk>/deplacer/', views.deplacer_soutenance, name='deplacer'),
     path('salles/<int:pk>/basculer/', views.basculer_salle, name='basculer_salle'),
     path('creneaux/<int:pk>/supprimer/', views.supprimer_creneau, name='supprimer_creneau'),
 ]
