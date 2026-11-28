@@ -8,9 +8,16 @@
     <h1 class="h3 mb-1">Ma soutenance</h1>
     <p class="text-muted mb-0">Informations relatives à votre soutenance de PFE et résultats de l'évaluation.</p>
   </div>
-  <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-arrow-left me-1"></i> Tableau de bord
-  </a>
+  <div class="d-flex flex-wrap gap-2">
+    {% if soutenance %}
+      <a href="{% url 'soutenances:convocation' soutenance.pk %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-envelope-paper me-1"></i> Ma convocation
+      </a>
+    {% endif %}
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Tableau de bord
+    </a>
+  </div>
 </div>
 
 {% if soutenance %}

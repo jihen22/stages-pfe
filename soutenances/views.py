@@ -37,7 +37,8 @@ def _notify_soutenance(soutenance, deplacee=False, anciens_membres=()):
     if etudiant:
         notify(
             etudiant,
-            f"Votre soutenance pour le PFE « {sujet} » {verbe} : le {date_str} en salle {soutenance.salle}.",
+            f"Votre soutenance pour le PFE « {sujet} » {verbe} : le {date_str} en salle {soutenance.salle}. "
+            f"Votre convocation est disponible.",
             reverse('soutenances:ma_soutenance'),
         )
 

@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
+from notifications.models import Notification
 from pfe.models import Livrable, ProjetPFE
 
 from . import fabriques
@@ -132,3 +133,38 @@ class DossierTests(ConvocationBaseTestCase):
         response = self.client.get(reverse('soutenances:mes_soutenances'))
         self.assertContains(response, self.url())
         self.assertContains(response, reverse('soutenances:convocation', args=[self.soutenance.pk]))
+
+
+class StudentDefenseTests(ConvocationBaseTestCase):
+    """Item 22: the student sees their schedule and reaches their notice."""
+
+    def test_student_page_shows_schedule_and_links_to_the_notice(self):
+        self.client.force_login(self.etudiant)
+        response = self.client.get(reverse('soutenances:ma_soutenance'))
+        self.assertContains(response, '09:00–09:45')
+        self.assertContains(response, 'Amphi A')
+        self.assertContains(response, 'Ma convocation')
+        self.assertContains(response, reverse('soutenances:convocation', args=[self.soutenance.pk]))
+
+    def test_student_without_defense_has_no_notice_link(self):
+        self.client.force_login(self.autre_etudiant)
+        response = self.client.get(reverse('soutenances:ma_soutenance'))
+        self.assertNotContains(response, 'Ma convocation')
+
+    def test_student_cannot_open_another_students_notice(self):
+        projet = ProjetPFE.objects.create(etudiant=self.autre_etudiant, encadrant_acad=self.acad,
+                                          sujet='Autre', status=ProjetPFE.Status.PLANIFIE)
+        autre = fabriques.soutenance(projet, nom_salle='Salle B12', jours=6)
+        self.client.force_login(self.etudiant)
+        self.assertEqual(
+            self.client.get(reverse('soutenances:convocation', args=[autre.pk])).status_code, 403)
+
+    def test_planning_notification_mentions_the_notice(self):
+        projet = ProjetPFE.objects.create(etudiant=self.autre_etudiant, encadrant_acad=self.acad,
+                                          sujet='Autre', status=ProjetPFE.Status.TERMINE)
+        self.client.force_login(self.admin)
+        self.client.post(reverse('soutenances:planifier'), {
+            'projet': projet.pk, 'creneau': fabriques.creneau(jours=8).pk,
+            'salle': fabriques.salle('Salle B12').pk, 'jury': [self.autre_jury.pk]})
+        message = Notification.objects.get(user=self.autre_etudiant).message
+        self.assertIn('convocation est disponible', message)
