@@ -33,4 +33,5 @@ Si une partie manque, l'item est PARTIAL. Sans preuve dans le code, l'item est N
 - Implémenter un seul item du backlog à la fois.
 - Avant de coder, lire PROGRESS.md et proposer un plan court.
 - Après chaque item : lancer les tests, puis mettre à jour PROGRESS.md (statut, fichiers modifiés, ce qui reste).
+- Après chaque item : committer et pousser directement sur main (pas de branche, pas de pull request).
 - Ne pas modifier les migrations déjà appliquées ; en créer de nouvelles.
