@@ -120,3 +120,90 @@ class OffreFormDomaineTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('domaine', response.context['form'].errors)
         self.assertFalse(Offre.objects.exists())
+
+
+class OffreSearchTests(TestCase):
+    """Item 5: students search, filter and open published offers only."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.etudiant = User.objects.create_user(
+            username='etudiant', password='demo1234', role=User.Role.ETUDIANT)
+        cls.pro = User.objects.create_user(
+            username='pro', password='demo1234', role=User.Role.ENCADRANT_PRO)
+
+        def offre(titre, type_=Offre.Type.STAGE, status=Offre.Status.PUBLIEE, **extra):
+            return Offre.objects.create(
+                encadrant_pro=cls.pro, titre=titre, description=extra.pop('description', 'x'),
+                type=type_, status=status, **extra)
+
+        cls.django = offre('Stage Django', competences='Python, Django')
+        cls.ml = offre('PFE Machine Learning', Offre.Type.PFE, description='Modèles de prédiction en Python')
+        cls.flutter = offre('PFE Flutter', Offre.Type.PFE, competences='Dart')
+        cls.brouillon = offre('Brouillon Django', status=Offre.Status.BROUILLON)
+        cls.en_validation = offre('Django en validation', status=Offre.Status.EN_VALIDATION)
+        cls.refusee = offre('Django refusé', status=Offre.Status.REFUSEE)
+
+    def setUp(self):
+        self.client.force_login(self.etudiant)
+
+    def _liste(self, **params):
+        response = self.client.get(reverse('offres:offre_list'), params)
+        self.assertEqual(response.status_code, 200)
+        return set(response.context['offres'])
+
+    def test_list_shows_only_published_offers(self):
+        self.assertEqual(self._liste(), {self.django, self.ml, self.flutter})
+
+    def test_search_matches_title_description_and_skills(self):
+        self.assertEqual(self._liste(q='django'), {self.django})          # title + skills
+        self.assertEqual(self._liste(q='prédiction'), {self.ml})         # description
+        self.assertEqual(self._liste(q='dart'), {self.flutter})          # skills
+        self.assertEqual(self._liste(q='python'), {self.django, self.ml})
+
+    def test_type_filter_and_combination_with_search(self):
+        self.assertEqual(self._liste(type=Offre.Type.PFE), {self.ml, self.flutter})
+        self.assertEqual(self._liste(type=Offre.Type.PFE, q='python'), {self.ml})
+
+    def test_unknown_type_is_ignored(self):
+        self.assertEqual(self._liste(type='INCONNU'), {self.django, self.ml, self.flutter})
+
+    def test_no_result_shows_the_empty_state(self):
+        self.assertEqual(self._liste(q='cobol'), set())
+
+    def test_results_are_paginated_and_keep_the_search(self):
+        for i in range(10):
+            Offre.objects.create(encadrant_pro=self.pro, titre=f'Stage Java {i}', description='x',
+                                 status=Offre.Status.PUBLIEE)
+        response = self.client.get(reverse('offres:offre_list'), {'q': 'java & spring'})
+        self.assertEqual(len(response.context['offres']), 0)
+        response = self.client.get(reverse('offres:offre_list'), {'q': 'java'})
+        self.assertEqual(len(response.context['offres']), 9)
+        self.assertTrue(response.context['is_paginated'])
+        self.assertContains(response, '?page=2&q=java')
+        page2 = self.client.get(reverse('offres:offre_list'), {'q': 'java', 'page': 2})
+        self.assertEqual(len(page2.context['offres']), 1)
+
+    def test_search_term_is_url_encoded_in_pagination_links(self):
+        for i in range(10):
+            Offre.objects.create(encadrant_pro=self.pro, titre=f'C++ & Qt {i}', description='x',
+                                 status=Offre.Status.PUBLIEE)
+        response = self.client.get(reverse('offres:offre_list'), {'q': 'C++ & Qt'})
+        self.assertContains(response, 'q=C%2B%2B%20%26%20Qt')
+
+    def test_student_opens_a_published_offer(self):
+        response = self.client.get(reverse('offres:offre_detail', args=[self.django.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Stage Django')
+        self.assertFalse(response.context['deja_postule'])
+        self.assertContains(response, reverse('candidatures:postuler', args=[self.django.pk]))
+
+    def test_unpublished_offers_cannot_be_opened_by_url(self):
+        for offre in (self.brouillon, self.en_validation, self.refusee):
+            with self.subTest(status=offre.status):
+                response = self.client.get(reverse('offres:offre_detail', args=[offre.pk]))
+                self.assertEqual(response.status_code, 404)
+
+    def test_search_is_student_only(self):
+        self.client.force_login(self.pro)
+        self.assertEqual(self.client.get(reverse('offres:offre_list')).status_code, 403)

@@ -1,12 +1,12 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 1 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 5 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 145 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 155 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
@@ -15,7 +15,7 @@ Method: I read the code only and changed nothing.
 | soutenances | 17 |
 | notifications | 10 |
 | candidatures | 3 |
-| offres | 9 |
+| offres | 19 |
 
 ## Definition of done (CLAUDE.md)
 
@@ -31,19 +31,18 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **31 j** | 168 j | **18.5 %** |
-| Non-AI items | **31 j** | 107 j | **29.0 %** |
+| All items | **34 j** | 168 j | **20.2 %** |
+| Non-AI items | **34 j** | 107 j | **31.8 %** |
 
-DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 31 j.
+DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 34 j.
 PARTIAL items count for 0 j.
-Item 5 (3 j) only lacks a search test. Once it is written, the non-AI total becomes 34 / 107 j (31.8 %).
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 9 | 1, 3, 4, 6, 7, 8, 13, 14, 16 |
-| PARTIAL | 10 | 2, 5, 10, 12, 19, 21, 22, 35, 36, 38 |
+| DONE | 10 | 1, 3, 4, 5, 6, 7, 8, 13, 14, 16 |
+| PARTIAL | 9 | 2, 10, 12, 19, 21, 22, 35, 36, 38 |
 | NOT STARTED | 20 | 9, 11, 15, 17, 18, 20, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -55,7 +54,7 @@ Item 5 (3 j) only lacks a search test. Once it is written, the non-AI total beco
 | 2 | View / edit my profile | 2 | Web | PARTIAL | Student: `accounts/models.py:90-140`, `accounts/views.py:209-221`, tests `accounts/tests.py:249-283`. Company supervisor: `accounts/models.py:150-182`, `accounts/views.py:158-206`, `templates/accounts/profil_encadrant_pro.html` | Academic supervisor, admin and jury can only pick theme/accent (`accounts/views.py:140-148`). They cannot edit their name, email or password. No test for the company-supervisor profile form. |
 | 3 | Company supervisor publishes an offer | 3 | Web | **DONE** | `offres/models.py`, `offres/migrations/0001_initial.py`, `offres/views.py:73-133`, `offres/urls.py`, `templates/offres/offre_form.html`, `mes_offres.html`, test `candidatures/tests.py:34-50` | Publication goes through approval, see item 4. |
 | 4 | Academic supervisor approves offers in their field | 2 | Web | **DONE** | Field: `Domaine` choices + `User.domaine` (`accounts/models.py:9-16, 58-64`, migration `accounts/migrations/0007_user_domaine.py`), `Offre.domaine` (`offres/models.py:31-37`, migration `offres/migrations/0002_offre_domaine.py`), required in `offres/forms.py`. Approval: `offres/views.py:141-192` (`offres_a_valider_pour`, queue + approve + refuse limited to `ENCADRANT_ACAD`, own field only, owner notified). Screens: `templates/offres/offres_a_valider.html`, `_sidebar.html`, `dashboards/encadrant_acad.html`. Tests: `offres/tests.py` (9 tests), `accounts/tests.py:25-66`, `candidatures/tests.py:34-60` | Offers created before this change have no field: every academic supervisor sees them. A supervisor's field is set in the Django admin (their own profile page can't edit it yet, see item 2). |
-| 5 | Student searches / views offers | 3 | Web | PARTIAL | `offres/views.py:21-66` (search `q` on title/description/skills, `type` filter, pagination, detail), `templates/offres/offre_list.html`, `offre_detail.html` | No test checks search, the filter or the detail page. Only "list page loads" (`candidatures/tests.py:60`, `accounts/tests.py:84`). |
+| 5 | Student searches / views offers | 3 | Web | **DONE** | `offres/views.py:22-72` (`OffreListView`: published offers only, search `q` on title/description/skills, `type` filter, pagination by 9; `OffreDetailView`: published offers only, « déjà postulé » flag), `templates/offres/offre_list.html`, `offre_detail.html`. Tests: `offres/tests.py:125-209` (`OffreSearchTests`, 10 tests: search by each field, type filter + search, pagination keeps the search, URL-encoded search, detail page, unpublished offers return 404, student only) | — |
 | 6 | Apply with CV + cover letter | 4 | Web | **DONE** | `candidatures/models.py` (CV, letter, unique student+offer), `candidatures/migrations/0001_initial.py`, `candidatures/views.py:32-69`, `templates/candidatures/candidature_form.html`, tests `candidatures/tests.py:58-100` | — |
 | 7 | Track my application + notifications | 4 | Web | **DONE** | `candidatures/views.py:20-29, 98-125`, `templates/candidatures/mes_candidatures.html`, `notifications/models.py`, `notifications/services.py`, `notifications/views.py`, `notifications/context_processors.py`, tests `notifications/tests.py:38-130` | In-app notifications only, no email (not required). |
 | 8 | Company supervisor sees applications received | 2 | Web | **DONE** | `candidatures/views.py:76-125` (list, filter by offer, accept/refuse), `templates/candidatures/candidatures_recues.html`, tests `candidatures/tests.py:76-81`, `notifications/tests.py:71-90` | — |
@@ -86,7 +85,7 @@ Item 5 (3 j) only lacks a search test. Once it is written, the non-AI total beco
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 145 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 155 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
@@ -106,7 +105,6 @@ Item 5 (3 j) only lacks a search test. Once it is written, the non-AI total beco
 
 After these: 18 (agreement) → 21 / 22 (notices, reports for the jury) → 11, 15, 23.
 
-Quick win to do along the way: one search test (item 5). It moves 3 j to DONE.
 
 ## Change log
 
@@ -171,3 +169,16 @@ Files changed:
 - Tests: `accounts/tests.py` (new `RegistrationTests`, 8 tests)
 
 What's left (outside item 1): nothing.
+
+### Item 5: students search and view offers (done 2026-11-28)
+
+Writing the tests found two bugs, both fixed:
+- **A student could open an unpublished offer by its URL** (draft, under review or refused): the detail page now only serves published offers (404 otherwise).
+- **The search term was not URL-encoded in the pagination links**, so a search like « C++ & Qt » broke on page 2.
+
+Files changed:
+- `offres/views.py` (`OffreDetailView` limited to published offers)
+- `templates/offres/offre_list.html` (`q|urlencode` in the pagination links)
+- Tests: `offres/tests.py` (new `OffreSearchTests`, 10 tests)
+
+What's left (outside item 5): nothing.

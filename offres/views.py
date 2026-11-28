@@ -57,7 +57,8 @@ class OffreDetailView(RoleRequiredMixin, DetailView):
     allowed_roles = (User.Role.ETUDIANT,)
 
     def get_queryset(self):
-        return Offre.objects.select_related('encadrant_pro')
+        # Drafts, offers under review and refused offers stay hidden from students.
+        return Offre.objects.filter(status=Offre.Status.PUBLIEE).select_related('encadrant_pro')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
