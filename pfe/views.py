@@ -8,6 +8,7 @@ from accounts.models import User
 from candidatures.models import Candidature
 from notifications.services import notify
 
+from .charge import charge_encadrant
 from .forms import LivrableForm, ProjetEncadrantForm, ProjetPFEForm
 from .models import Livrable, ProjetPFE
 from .workflow import ETATS_DEPOT_OUVERT, TransitionInterdite, appliquer, peut
@@ -161,6 +162,12 @@ def mes_etudiants(request):
         projet.peut_terminer = peut(projet, 'terminer')
         projet.peut_rouvrir = peut(projet, 'rouvrir')
     return render(request, 'pfe/mes_etudiants.html', {'projets': projets})
+
+
+@role_required(User.Role.ENCADRANT_ACAD)
+def ma_charge(request):
+    """Workload of the academic supervisor: active projects vs capacity, pending work."""
+    return render(request, 'pfe/ma_charge.html', {'charge': charge_encadrant(request.user)})
 
 
 @role_required(User.Role.ENCADRANT_ACAD)

@@ -83,6 +83,24 @@
   </div>
 </div>
 
+{# ================= WORKLOAD ================= #}
+<a class="card lift reveal mb-4 text-decoration-none" href="{% url 'pfe:ma_charge' %}">
+  <div class="card-body d-flex flex-wrap align-items-center gap-3">
+    <span class="feature-icon"><i class="bi bi-speedometer2"></i></span>
+    <div class="flex-grow-1" style="min-width: 12rem;">
+      <div class="d-flex justify-content-between">
+        <span class="fw-semibold">Ma charge d'encadrement</span>
+        <span class="tabular-nums">{{ charge.actifs }} / {{ charge.capacite }} projets actifs</span>
+      </div>
+      <div class="progress mt-2" role="progressbar" aria-label="Charge d'encadrement"
+           aria-valuenow="{{ charge.actifs }}" aria-valuemin="0" aria-valuemax="{{ charge.capacite }}" style="height: .5rem;">
+        <div class="progress-bar bg-{{ charge.niveau }}" style="width: {{ charge.jauge }}%"></div>
+      </div>
+    </div>
+    <i class="bi bi-arrow-right action-arrow"></i>
+  </div>
+</a>
+
 {# ================= WORKFLOW ================= #}
 <div class="mb-2">
   <div class="section-head reveal mb-4">

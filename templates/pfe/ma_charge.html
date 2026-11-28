@@ -1,0 +1,159 @@
+{% extends "base_app.html" %}
+
+{% block title %}Ma charge d'encadrement{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'accounts:dashboard_encadrant_acad' %}" class="btn btn-sm btn-link px-0 mb-2">
+    <i class="bi bi-arrow-left"></i> Retour au tableau de bord
+  </a>
+  <h1 class="h3 mb-1">Ma charge d'encadrement</h1>
+  <p class="text-muted mb-0">Vos projets actifs, ce qui attend votre action et vos prochaines soutenances.</p>
+</div>
+
+{% if charge.surcharge %}
+  <div class="alert alert-danger d-flex gap-2" role="alert">
+    <i class="bi bi-exclamation-octagon"></i>
+    <div>
+      Vous encadrez <strong>{{ charge.actifs }}</strong> projets actifs pour une capacité de
+      <strong>{{ charge.capacite }}</strong>. Évitez de prendre de nouveaux projets.
+    </div>
+  </div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  {# Load gauge #}
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-baseline mb-2">
+          <h2 class="h6 text-muted text-uppercase mb-0">Projets actifs</h2>
+          <span class="badge text-bg-{{ charge.niveau }}">{{ charge.taux }} %</span>
+        </div>
+        <div class="display-6 fw-semibold tabular-nums">
+          {{ charge.actifs }}<span class="fs-4 text-muted"> / {{ charge.capacite }}</span>
+        </div>
+        <div class="progress my-3" role="progressbar" aria-label="Charge d'encadrement"
+             aria-valuenow="{{ charge.actifs }}" aria-valuemin="0" aria-valuemax="{{ charge.capacite }}" style="height: .75rem;">
+          <div class="progress-bar bg-{{ charge.niveau }}" style="width: {{ charge.jauge }}%"></div>
+        </div>
+        <p class="small text-muted mb-0">
+          {% if charge.places_libres %}
+            {{ charge.places_libres }} place{{ charge.places_libres|pluralize }} disponible{{ charge.places_libres|pluralize }}.
+          {% else %}
+            Capacité atteinte.
+          {% endif %}
+          {{ charge.soutenus }} projet{{ charge.soutenus|pluralize }} déjà soutenu{{ charge.soutenus|pluralize }}.
+          La capacité est fixée par l'administration.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {# Breakdown and pending work #}
+  <div class="col-lg-6">
+    <div class="row g-3 h-100">
+      {% for etat in charge.par_statut %}
+        <div class="col-6 col-md-3 col-lg-6 col-xl-3">
+          <div class="card h-100 text-center">
+            <div class="card-body py-3">
+              <div class="fs-4 fw-semibold tabular-nums">{{ etat.nombre }}</div>
+              {% include "partials/_status_badge.html" with status=etat.code label=etat.label %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="col-6">
+        <a class="card h-100 text-decoration-none" href="{% url 'pfe:livrables_a_valider' %}">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-semibold tabular-nums">{{ charge.livrables_a_valider }}</div>
+            <div class="small text-muted"><i class="bi bi-clipboard-check"></i> Livrables à valider</div>
+          </div>
+        </a>
+      </div>
+      <div class="col-6">
+        <div class="card h-100">
+          <div class="card-body py-3">
+            <div class="fs-4 fw-semibold tabular-nums">{{ charge.livrables_a_corriger }}</div>
+            <div class="small text-muted"><i class="bi bi-pencil"></i> En correction chez l'étudiant</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  {# Per-project follow-up #}
+  <div class="col-xl-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <h2 class="h5 mb-0"><i class="bi bi-people me-1"></i> Suivi par étudiant</h2>
+      </div>
+      {% if charge.projets_actifs %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Étudiant</th>
+                <th>Statut</th>
+                <th class="text-center">À valider</th>
+                <th class="text-center">En correction</th>
+                <th>Dernier dépôt</th>
+                <th>Soutenance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for projet in charge.projets_actifs %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ projet.etudiant.get_full_name|default:projet.etudiant.username }}</div>
+                    <div class="text-muted small text-truncate" style="max-width: 260px;" title="{{ projet.sujet }}">{{ projet.sujet }}</div>
+                  </td>
+                  <td>{% include "partials/_status_badge.html" with status=projet.status label=projet.get_status_display %}</td>
+                  <td class="text-center">
+                    {% if projet.livrables_en_attente %}
+                      <span class="badge text-bg-warning">{{ projet.livrables_en_attente }}</span>
+                    {% else %}<span class="text-muted">0</span>{% endif %}
+                  </td>
+                  <td class="text-center">{{ projet.livrables_a_corriger }}</td>
+                  <td class="small text-muted">{{ projet.dernier_depot|date:"d/m/Y"|default:"Aucun" }}</td>
+                  <td class="small">
+                    {% if projet.soutenance %}{{ projet.soutenance.date|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">&mdash;</span>{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        {% url 'pfe:affectations' as affectations_url %}
+        <div class="card-body">
+          {% include "partials/_empty_state.html" with icon="people" title="Aucun projet actif" text="Vous n'encadrez aucun projet en cours pour le moment." action_url=affectations_url action_label="Voir les projets à encadrer" action_icon="diagram-3" %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Upcoming defenses #}
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h2 class="h5 mb-0"><i class="bi bi-calendar-event me-1"></i> Soutenances à venir</h2>
+      </div>
+      {% if charge.soutenances_a_venir %}
+        <ul class="list-group list-group-flush">
+          {% for s in charge.soutenances_a_venir %}
+            <li class="list-group-item">
+              <div class="fw-semibold">{{ s.date|date:"d/m/Y à H:i" }} · {{ s.salle }}</div>
+              <div class="small text-muted">{{ s.projet.etudiant.get_full_name|default:s.projet.etudiant.username }} — {{ s.projet.sujet }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="card-body text-muted small">Aucune soutenance planifiée pour vos étudiants.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

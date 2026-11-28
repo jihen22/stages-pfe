@@ -60,6 +60,9 @@
         <a class="nav-link {% if rn == 'mes_etudiants' %}active{% endif %}" href="{% url 'pfe:mes_etudiants' %}">
           <i class="bi bi-people"></i> Mes étudiants
         </a>
+        <a class="nav-link {% if rn == 'ma_charge' %}active{% endif %}" href="{% url 'pfe:ma_charge' %}">
+          <i class="bi bi-speedometer2"></i> Ma charge
+        </a>
         <a class="nav-link {% if rn == 'livrables_a_valider' %}active{% endif %}" href="{% url 'pfe:livrables_a_valider' %}">
           <i class="bi bi-clipboard-check"></i> Livrables à valider
         </a>
