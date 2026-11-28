@@ -370,3 +370,85 @@ class SeedDemoCommandTests(TestCase):
         self.assertEqual(Candidature.objects.filter(etudiant=etudiant).count(), 3)
         self.assertEqual(etudiant.notifications.count(), 3)
         self.assertTrue(etudiant.profil_etudiant.is_complete)
+
+
+class RegistrationTests(TestCase):
+    """Item 1: self sign-up for students and company supervisors, then role-based login."""
+
+    PASSWORD = 'Tek-Up#2026!'
+
+    def _student_data(self, **extra):
+        data = {
+            'username': 'nouvel_etudiant', 'first_name': 'Amal', 'last_name': 'Ben Salem',
+            'email': 'amal@example.com', 'password1': self.PASSWORD, 'password2': self.PASSWORD,
+        }
+        data.update(extra)
+        return data
+
+    def test_student_can_sign_up_then_log_in_to_their_dashboard(self):
+        response = self.client.post(reverse('accounts:register'), self._student_data())
+        self.assertRedirects(response, reverse('accounts:login'))
+
+        user = User.objects.get(username='nouvel_etudiant')
+        self.assertEqual(user.role, User.Role.ETUDIANT)
+        self.assertTrue(ProfilEtudiant.objects.filter(user=user).exists())
+
+        response = self.client.post(reverse('accounts:login'), {
+            'username': 'nouvel_etudiant', 'password': self.PASSWORD,
+        })
+        self.assertRedirects(response, reverse('accounts:dashboard_etudiant'))
+
+    def test_sign_up_cannot_choose_a_privileged_role(self):
+        self.client.post(reverse('accounts:register'), self._student_data(role=User.Role.ADMIN))
+        self.assertEqual(User.objects.get(username='nouvel_etudiant').role, User.Role.ETUDIANT)
+
+    def test_mismatched_passwords_are_rejected(self):
+        response = self.client.post(
+            reverse('accounts:register'), self._student_data(password2='Autre#2026!'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('password2', response.context['form'].errors)
+        self.assertFalse(User.objects.filter(username='nouvel_etudiant').exists())
+
+    def test_username_must_be_unique(self):
+        User.objects.create_user(username='nouvel_etudiant', password='x')
+        response = self.client.post(reverse('accounts:register'), self._student_data())
+        self.assertIn('username', response.context['form'].errors)
+
+    def test_company_supervisor_can_sign_up_with_their_company(self):
+        response = self.client.post(reverse('accounts:register_encadrant_pro'), {
+            'username': 'karim_pro', 'first_name': 'Karim', 'last_name': 'T',
+            'email': 'karim@entreprise.tn', 'entreprise': 'Vermeg', 'poste': 'Lead dev',
+            'password1': self.PASSWORD, 'password2': self.PASSWORD,
+        })
+        self.assertRedirects(response, reverse('accounts:login'))
+        user = User.objects.get(username='karim_pro')
+        self.assertEqual(user.role, User.Role.ENCADRANT_PRO)
+        self.assertEqual(user.profil_encadrant_pro.entreprise, 'Vermeg')
+
+        response = self.client.post(reverse('accounts:login'), {
+            'username': 'karim_pro', 'password': self.PASSWORD,
+        })
+        self.assertRedirects(response, reverse('accounts:dashboard_encadrant_pro'))
+
+    def test_company_supervisor_needs_email_and_company(self):
+        response = self.client.post(reverse('accounts:register_encadrant_pro'), {
+            'username': 'karim_pro', 'password1': self.PASSWORD, 'password2': self.PASSWORD,
+        })
+        errors = response.context['form'].errors
+        for field in ('email', 'entreprise', 'poste'):
+            self.assertIn(field, errors)
+        self.assertFalse(User.objects.filter(username='karim_pro').exists())
+
+    def test_wrong_password_does_not_log_in(self):
+        User.objects.create_user(username='sami', password=self.PASSWORD, role=User.Role.ETUDIANT)
+        response = self.client.post(reverse('accounts:login'), {
+            'username': 'sami', 'password': 'mauvais',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+    def test_logged_in_user_is_sent_away_from_sign_up(self):
+        user = User.objects.create_user(username='sami', password=self.PASSWORD, role=User.Role.ETUDIANT)
+        self.client.force_login(user)
+        response = self.client.get(reverse('accounts:register'))
+        self.assertRedirects(response, reverse('accounts:dashboard'), target_status_code=302)

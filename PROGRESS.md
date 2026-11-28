@@ -1,16 +1,16 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 16 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 1 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 137 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 145 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
-| accounts | 30 |
+| accounts | 38 |
 | pfe | 68 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py`) |
 | soutenances | 17 |
 | notifications | 10 |
@@ -31,19 +31,19 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **26 j** | 168 j | **15.5 %** |
-| Non-AI items | **26 j** | 107 j | **24.3 %** |
+| All items | **31 j** | 168 j | **18.5 %** |
+| Non-AI items | **31 j** | 107 j | **29.0 %** |
 
-DONE items: 3 (3 j) + 4 (2 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 26 j.
+DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 31 j.
 PARTIAL items count for 0 j.
-Items 1 and 5 (8 j together) each only lack one test. Once those tests are written, the non-AI total becomes 34 / 107 j (31.8 %).
+Item 5 (3 j) only lacks a search test. Once it is written, the non-AI total becomes 34 / 107 j (31.8 %).
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 8 | 3, 4, 6, 7, 8, 13, 14, 16 |
-| PARTIAL | 11 | 1, 2, 5, 10, 12, 19, 21, 22, 35, 36, 38 |
+| DONE | 9 | 1, 3, 4, 6, 7, 8, 13, 14, 16 |
+| PARTIAL | 10 | 2, 5, 10, 12, 19, 21, 22, 35, 36, 38 |
 | NOT STARTED | 20 | 9, 11, 15, 17, 18, 20, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -51,7 +51,7 @@ Items 1 and 5 (8 j together) each only lack one test. Once those tests are writt
 
 | ID | Item (short) | j | Type | Status | Proof (files) | What's missing |
 |---|---|---|---|---|---|---|
-| 1 | Sign up / log in by role | 5 | Web | PARTIAL | `accounts/models.py:9-87` (`User.role`, `get_dashboard_url`), `accounts/views.py:29-64` (login, student sign-up, company-supervisor sign-up), `accounts/urls.py`, `templates/accounts/login.html`, `register.html`, tests `accounts/tests.py:121-138` (login → role dashboard) | No test submits the sign-up form: only "page loads" (`accounts/tests.py:116`). The other roles have no self sign-up and are created by `create_demo_users` or the Django admin. That is fine if intended. |
+| 1 | Sign up / log in by role | 5 | Web | **DONE** | `accounts/models.py` (`User.role`, `get_dashboard_url`), `accounts/forms.py` (`StudentRegistrationForm`, `EncadrantProRegistrationForm`), `accounts/views.py:29-64` (login → role dashboard, student sign-up, company-supervisor sign-up), `accounts/urls.py`, `templates/accounts/login.html`, `register.html`. Tests: `accounts/tests.py:375-454` (`RegistrationTests`, 8 tests: sign-up then login for both roles, no role escalation, password mismatch, unique username, required company fields, wrong password) and `accounts/tests.py:121-138` (login redirect by role) | — Academic supervisors, admin and jury have no self sign-up by design: the admin creates them (Django admin or `create_demo_users`). |
 | 2 | View / edit my profile | 2 | Web | PARTIAL | Student: `accounts/models.py:90-140`, `accounts/views.py:209-221`, tests `accounts/tests.py:249-283`. Company supervisor: `accounts/models.py:150-182`, `accounts/views.py:158-206`, `templates/accounts/profil_encadrant_pro.html` | Academic supervisor, admin and jury can only pick theme/accent (`accounts/views.py:140-148`). They cannot edit their name, email or password. No test for the company-supervisor profile form. |
 | 3 | Company supervisor publishes an offer | 3 | Web | **DONE** | `offres/models.py`, `offres/migrations/0001_initial.py`, `offres/views.py:73-133`, `offres/urls.py`, `templates/offres/offre_form.html`, `mes_offres.html`, test `candidatures/tests.py:34-50` | Publication goes through approval, see item 4. |
 | 4 | Academic supervisor approves offers in their field | 2 | Web | **DONE** | Field: `Domaine` choices + `User.domaine` (`accounts/models.py:9-16, 58-64`, migration `accounts/migrations/0007_user_domaine.py`), `Offre.domaine` (`offres/models.py:31-37`, migration `offres/migrations/0002_offre_domaine.py`), required in `offres/forms.py`. Approval: `offres/views.py:141-192` (`offres_a_valider_pour`, queue + approve + refuse limited to `ENCADRANT_ACAD`, own field only, owner notified). Screens: `templates/offres/offres_a_valider.html`, `_sidebar.html`, `dashboards/encadrant_acad.html`. Tests: `offres/tests.py` (9 tests), `accounts/tests.py:25-66`, `candidatures/tests.py:34-60` | Offers created before this change have no field: every academic supervisor sees them. A supervisor's field is set in the Django admin (their own profile page can't edit it yet, see item 2). |
@@ -86,7 +86,7 @@ Items 1 and 5 (8 j together) each only lack one test. Once those tests are writt
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 137 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 145 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
@@ -106,7 +106,7 @@ Items 1 and 5 (8 j together) each only lack one test. Once those tests are writt
 
 After these: 18 (agreement) → 21 / 22 (notices, reports for the jury) → 11, 15, 23.
 
-Quick wins to do along the way: one sign-up test (item 1) and one search test (item 5). They move 8 j to DONE.
+Quick win to do along the way: one search test (item 5). It moves 3 j to DONE.
 
 ## Change log
 
@@ -162,3 +162,12 @@ Files changed:
 Checked: page and dashboard read in the browser with demo data (`encadrant_acad`: 1 / 8 active projects). The browser pane was hidden, so the layout was not checked visually; it uses the standard Bootstrap grid.
 
 What's left (outside item 16): supervisors can't change their own capacity (admin only, by choice).
+
+### Item 1: sign up / log in by role (done 2026-11-28)
+
+The feature already existed; it lacked a test of the sign-up itself.
+
+Files changed:
+- Tests: `accounts/tests.py` (new `RegistrationTests`, 8 tests)
+
+What's left (outside item 1): nothing.
