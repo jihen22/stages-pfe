@@ -143,17 +143,6 @@ def dashboard_jury(request):
 # Profile & appearance (theme / accent)
 # ---------------------------------------------------------------------------
 
-@login_required
-def preferences(request):
-    """Page profil : version riche pour l'encadrant pro, version standard pour les autres."""
-    if request.user.is_encadrant_pro:
-        return profil_encadrant_pro(request)
-    return render(request, 'accounts/preferences.html', {
-        'themes': User.Theme.choices,
-        'accents': User.Accent.choices,
-    })
-
-
 SECTION_MESSAGES = {
     'infos': 'Vos informations ont été mises à jour.',
     'entreprise': "Les informations de l'entreprise ont été enregistrées.",
@@ -161,39 +150,67 @@ SECTION_MESSAGES = {
 }
 
 
+def _formulaire(section, user, data=None, profil=None):
+    if section == 'infos':
+        return UserInfoForm(data, instance=user)
+    if section == 'entreprise':
+        return ProfilEncadrantProForm(data, instance=profil)
+    return BootstrapPasswordChangeForm(user, data)
+
+
+def _gerer_sections(request, sections, profil=None):
+    """Shared POST handling of the profile pages (item 2).
+
+    Returns ``(forms, active_section, response)``; ``response`` is a redirect
+    once a section was saved (or the section is unknown), else ``None``.
+    """
+    user = request.user
+    forms_ = {section: _formulaire(section, user, profil=profil) for section in sections}
+    active = sections[0]
+    if request.method == 'POST':
+        section = request.POST.get('section')
+        if section not in sections:
+            return forms_, active, redirect('accounts:preferences')
+        form = _formulaire(section, user, request.POST, profil)
+        if form.is_valid():
+            saved = form.save()
+            if section == 'securite':
+                # Without this, changing the password would log the user out.
+                update_session_auth_hash(request, saved)
+            messages.success(request, SECTION_MESSAGES[section])
+            return forms_, section, redirect(f"{reverse('accounts:preferences')}#{section}")
+        forms_[section] = form  # show the form again with its errors
+        active = section
+    return forms_, active, None
+
+
+@login_required
+def preferences(request):
+    """Profile page: identity, password and appearance for every role.
+
+    The company supervisor gets a richer version with their company details.
+    """
+    if request.user.is_encadrant_pro:
+        return profil_encadrant_pro(request)
+    forms_, active, response = _gerer_sections(request, ('infos', 'securite'))
+    if response:
+        return response
+    return render(request, 'accounts/preferences.html', {
+        'form_infos': forms_['infos'],
+        'form_securite': forms_['securite'],
+        'active': active,
+        'themes': User.Theme.choices,
+        'accents': User.Accent.choices,
+    })
+
+
 def profil_encadrant_pro(request):
     """Profil de l'encadrant pro : infos, entreprise, sécurité, apparence."""
     user = request.user
     profil, _ = ProfilEncadrantPro.objects.get_or_create(user=user)
-
-    forms_ = {
-        'infos': UserInfoForm(instance=user),
-        'entreprise': ProfilEncadrantProForm(instance=profil),
-        'securite': BootstrapPasswordChangeForm(user),
-    }
-    active = 'infos'
-
-    if request.method == 'POST':
-        section = request.POST.get('section')
-        if section == 'infos':
-            form = UserInfoForm(request.POST, instance=user)
-        elif section == 'entreprise':
-            form = ProfilEncadrantProForm(request.POST, instance=profil)
-        elif section == 'securite':
-            form = BootstrapPasswordChangeForm(user, request.POST)
-        else:
-            return redirect('accounts:preferences')
-
-        if form.is_valid():
-            saved = form.save()
-            if section == 'securite':
-                # Sans cette ligne, changer le mot de passe déconnecte l'utilisateur
-                update_session_auth_hash(request, saved)
-            messages.success(request, SECTION_MESSAGES[section])
-            return redirect(f"{reverse('accounts:preferences')}#{section}")
-
-        forms_[section] = form   # on réaffiche le formulaire avec ses erreurs
-        active = section
+    forms_, active, response = _gerer_sections(request, ('infos', 'entreprise', 'securite'), profil)
+    if response:
+        return response
 
     offres = Offre.objects.filter(encadrant_pro=user)
     return render(request, 'accounts/profil_encadrant_pro.html', {

@@ -1,16 +1,16 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 20 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 2 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 232 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 241 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
-| accounts | 38 |
+| accounts | 47 |
 | pfe | 103 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py` + 19 in `test_suggestion.py` + 16 in `test_versions.py`) |
 | soutenances | 59 (17 in `tests.py` + 21 in `test_salles_creneaux.py` + 21 in `test_conflits.py`) |
 | notifications | 10 |
@@ -31,18 +31,18 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **55 j** | 168 j | **32.7 %** |
-| Non-AI items | **55 j** | 107 j | **51.4 %** |
+| All items | **57 j** | 168 j | **33.9 %** |
+| Non-AI items | **57 j** | 107 j | **53.3 %** |
 
-DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) + 20 (5 j) = 55 j.
+DONE items: 1 (5 j) + 2 (2 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) + 20 (5 j) = 57 j.
 PARTIAL items count for 0 j.
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 14 | 1, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19, 20 |
-| PARTIAL | 6 | 2, 21, 22, 35, 36, 38 |
+| DONE | 15 | 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19, 20 |
+| PARTIAL | 5 | 21, 22, 35, 36, 38 |
 | NOT STARTED | 19 | 9, 11, 15, 17, 18, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -51,7 +51,7 @@ PARTIAL items count for 0 j.
 | ID | Item (short) | j | Type | Status | Proof (files) | What's missing |
 |---|---|---|---|---|---|---|
 | 1 | Sign up / log in by role | 5 | Web | **DONE** | `accounts/models.py` (`User.role`, `get_dashboard_url`), `accounts/forms.py` (`StudentRegistrationForm`, `EncadrantProRegistrationForm`), `accounts/views.py:29-64` (login → role dashboard, student sign-up, company-supervisor sign-up), `accounts/urls.py`, `templates/accounts/login.html`, `register.html`. Tests: `accounts/tests.py:375-454` (`RegistrationTests`, 8 tests: sign-up then login for both roles, no role escalation, password mismatch, unique username, required company fields, wrong password) and `accounts/tests.py:121-138` (login redirect by role) | — Academic supervisors, admin and jury have no self sign-up by design: the admin creates them (Django admin or `create_demo_users`). |
-| 2 | View / edit my profile | 2 | Web | PARTIAL | Student: `accounts/models.py:90-140`, `accounts/views.py:209-221`, tests `accounts/tests.py:249-283`. Company supervisor: `accounts/models.py:150-182`, `accounts/views.py:158-206`, `templates/accounts/profil_encadrant_pro.html` | Academic supervisor, admin and jury can only pick theme/accent (`accounts/views.py:140-148`). They cannot edit their name, email or password. No test for the company-supervisor profile form. |
+| 2 | View / edit my profile | 2 | Web | **DONE** | One « Mon profil » page for every role: identity (first name, last name, email), password, appearance (`accounts/views.py:161-230`: shared `_gerer_sections`, `preferences`, `profil_encadrant_pro`; `templates/accounts/preferences.html`). Company supervisors keep their richer page with company details; students also edit their student profile (`profil_etudiant`); academic supervisors see their field and capacity read-only. Tests: `accounts/tests.py:457` (`ProfileEditTests`, 9 tests: identity and password for each of the 5 roles, wrong current password, invalid email, no role change, login required) | — |
 | 3 | Company supervisor publishes an offer | 3 | Web | **DONE** | `offres/models.py`, `offres/migrations/0001_initial.py`, `offres/views.py:73-133`, `offres/urls.py`, `templates/offres/offre_form.html`, `mes_offres.html`, test `candidatures/tests.py:34-50` | Publication goes through approval, see item 4. |
 | 4 | Academic supervisor approves offers in their field | 2 | Web | **DONE** | Field: `Domaine` choices + `User.domaine` (`accounts/models.py:9-16, 58-64`, migration `accounts/migrations/0007_user_domaine.py`), `Offre.domaine` (`offres/models.py:31-37`, migration `offres/migrations/0002_offre_domaine.py`), required in `offres/forms.py`. Approval: `offres/views.py:141-192` (`offres_a_valider_pour`, queue + approve + refuse limited to `ENCADRANT_ACAD`, own field only, owner notified). Screens: `templates/offres/offres_a_valider.html`, `_sidebar.html`, `dashboards/encadrant_acad.html`. Tests: `offres/tests.py` (9 tests), `accounts/tests.py:25-66`, `candidatures/tests.py:34-60` | Offers created before this change have no field: every academic supervisor sees them. A supervisor's field is set in the Django admin (their own profile page can't edit it yet, see item 2). |
 | 5 | Student searches / views offers | 3 | Web | **DONE** | `offres/views.py:22-72` (`OffreListView`: published offers only, search `q` on title/description/skills, `type` filter, pagination by 9; `OffreDetailView`: published offers only, « déjà postulé » flag), `templates/offres/offre_list.html`, `offre_detail.html`. Tests: `offres/tests.py:125-209` (`OffreSearchTests`, 10 tests: search by each field, type filter + search, pagination keeps the search, URL-encoded search, detail page, unpublished offers return 404, student only) | — |
@@ -85,7 +85,7 @@ PARTIAL items count for 0 j.
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 232 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 241 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
@@ -253,3 +253,13 @@ Files changed:
 Checked: with demo data, a defense put into another's slot and room shows 2 conflicts (room + shared jury member) with 3 free alternatives, flagged on the planning page and the admin dashboard.
 
 What's left (outside item 20): two admins saving at the very same moment could still create a conflict (SQLite has no row locks); it would then show up on the conflicts page.
+
+### Item 2: profile for every role (done 2026-11-28)
+
+- Every role can now change their first name, last name, email and password on « Mon profil ». Before, only the company supervisor could; the others could only pick a theme.
+- The company supervisor's page and the new one share the same code (`_gerer_sections`), so both behave the same (messages, errors, staying logged in after a password change).
+- The username, role, field and capacity can't be changed by the user.
+
+Files changed: `accounts/views.py`, `templates/accounts/preferences.html`, `templates/partials/_topbar.html`, `accounts/tests.py`.
+
+What's left (outside item 2): nothing.

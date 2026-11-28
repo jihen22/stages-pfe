@@ -7,7 +7,7 @@ from django.urls import reverse
 from candidatures.models import Candidature
 from offres.models import Offre
 
-from .models import ProfilEtudiant, User
+from .models import Domaine, ProfilEtudiant, User
 
 MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -452,3 +452,102 @@ class RegistrationTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse('accounts:register'))
         self.assertRedirects(response, reverse('accounts:dashboard'), target_status_code=302)
+
+
+class ProfileEditTests(TestCase):
+    """Item 2: every role can view and edit its identity and password."""
+
+    PASSWORD = 'Tek-Up#2026!'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.users = {
+            role: User.objects.create_user(
+                username=f'u_{role.lower()}', password=cls.PASSWORD, role=role,
+                first_name='Ancien', last_name='Nom', email=f'{role.lower()}@example.com')
+            for role in User.Role.values
+        }
+
+    def test_every_role_can_update_name_and_email(self):
+        for role, user in self.users.items():
+            with self.subTest(role=role):
+                self.client.force_login(user)
+                response = self.client.post(reverse('accounts:preferences'), {
+                    'section': 'infos', 'first_name': 'Nouveau', 'last_name': role.title(),
+                    'email': f'nouveau.{role.lower()}@example.com',
+                })
+                self.assertRedirects(response, reverse('accounts:preferences') + '#infos',
+                                     fetch_redirect_response=False)
+                user.refresh_from_db()
+                self.assertEqual((user.first_name, user.email), ('Nouveau', f'nouveau.{role.lower()}@example.com'))
+
+    def test_every_role_can_change_password_and_stays_logged_in(self):
+        for role, user in self.users.items():
+            with self.subTest(role=role):
+                self.client.force_login(user)
+                self.client.post(reverse('accounts:preferences'), {
+                    'section': 'securite', 'old_password': self.PASSWORD,
+                    'new_password1': 'Nouveau#Mot2Passe', 'new_password2': 'Nouveau#Mot2Passe',
+                })
+                user.refresh_from_db()
+                self.assertTrue(user.check_password('Nouveau#Mot2Passe'))
+                # update_session_auth_hash keeps the session valid
+                self.assertEqual(self.client.get(reverse('accounts:preferences')).status_code, 200)
+
+    def test_wrong_current_password_is_refused(self):
+        user = self.users[User.Role.JURY]
+        self.client.force_login(user)
+        response = self.client.post(reverse('accounts:preferences'), {
+            'section': 'securite', 'old_password': 'faux',
+            'new_password1': 'Nouveau#Mot2Passe', 'new_password2': 'Nouveau#Mot2Passe',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('old_password', response.context['form_securite'].errors)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password(self.PASSWORD))
+
+    def test_invalid_email_is_shown_again(self):
+        self.client.force_login(self.users[User.Role.ADMIN])
+        response = self.client.post(reverse('accounts:preferences'), {
+            'section': 'infos', 'first_name': 'A', 'last_name': 'B', 'email': 'pas-un-email'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active'], 'infos')
+        self.assertIn('email', response.context['form_infos'].errors)
+
+    def test_role_cannot_be_changed_through_the_form(self):
+        user = self.users[User.Role.ETUDIANT]
+        self.client.force_login(user)
+        self.client.post(reverse('accounts:preferences'), {
+            'section': 'infos', 'first_name': 'A', 'last_name': 'B', 'email': 'a@b.tn',
+            'role': User.Role.ADMIN, 'capacite_encadrement': 30})
+        user.refresh_from_db()
+        self.assertEqual(user.role, User.Role.ETUDIANT)
+
+    def test_unknown_section_is_ignored(self):
+        self.client.force_login(self.users[User.Role.ADMIN])
+        response = self.client.post(reverse('accounts:preferences'), {'section': 'entreprise'})
+        self.assertRedirects(response, reverse('accounts:preferences'))
+
+    def test_academic_supervisor_sees_field_and_capacity_read_only(self):
+        user = self.users[User.Role.ENCADRANT_ACAD]
+        user.domaine = Domaine.DATA_IA
+        user.save()
+        self.client.force_login(user)
+        response = self.client.get(reverse('accounts:preferences'))
+        self.assertContains(response, 'Data science et IA')
+        self.assertContains(response, "fixés par l'administration")
+        self.assertNotIn('domaine', response.context['form_infos'].fields)
+
+    def test_company_supervisor_profile_still_works(self):
+        user = self.users[User.Role.ENCADRANT_PRO]
+        self.client.force_login(user)
+        response = self.client.post(reverse('accounts:preferences'), {
+            'section': 'entreprise', 'entreprise': 'Vermeg', 'poste': 'CTO'})
+        self.assertRedirects(response, reverse('accounts:preferences') + '#entreprise',
+                             fetch_redirect_response=False)
+        self.assertEqual(user.profil_encadrant_pro.entreprise, 'Vermeg')
+
+    def test_profile_requires_login(self):
+        response = self.client.post(reverse('accounts:preferences'), {'section': 'infos'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('accounts:login'), response.url)
