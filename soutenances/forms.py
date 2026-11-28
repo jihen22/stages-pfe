@@ -30,12 +30,16 @@ class SoutenanceForm(BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Only finished projects (state machine, pfe/workflow.py) can get a defense.
         projets = ProjetPFE.objects.all()
         if self.instance.pk and self.instance.projet_id:
             # Editing an existing defense: allow keeping its current project.
-            projets = projets.filter(Q(soutenance__isnull=True) | Q(pk=self.instance.projet_id))
+            projets = projets.filter(
+                Q(soutenance__isnull=True, status=ProjetPFE.Status.TERMINE)
+                | Q(pk=self.instance.projet_id)
+            )
         else:
-            projets = projets.filter(soutenance__isnull=True)
+            projets = projets.filter(soutenance__isnull=True, status=ProjetPFE.Status.TERMINE)
         self.fields['projet'].queryset = projets
 
         self.fields['jury'].queryset = User.objects.filter(role=User.Role.JURY)

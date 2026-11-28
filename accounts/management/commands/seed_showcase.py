@@ -203,14 +203,14 @@ class Command(BaseCommand):
                 "Plateforme de gestion des stages et PFE (Django)",
                 "Conception et développement de la plateforme : gestion des offres, "
                 "candidatures, projets PFE, livrables et soutenances.",
-                ProjetPFE.Status.EN_COURS,
+                ProjetPFE.Status.PLANIFIE,
             ),
             (
                 "ines", etudiant2, None,
                 Offre.objects.filter(titre="PFE Application mobile Flutter").first(),
                 "PFE Application mobile Flutter",
                 "Application mobile de suivi de stage connectée à l'API de la plateforme.",
-                ProjetPFE.Status.EN_COURS,
+                ProjetPFE.Status.EN_ATTENTE,
             ),
             (
                 "yassine", etudiant3, encadrant_acad, None,
@@ -224,7 +224,7 @@ class Command(BaseCommand):
                 "Détection des doublons dans les candidatures",
                 "Nettoyage et déduplication des candidatures reçues, avec un tableau de bord "
                 "de suivi des doublons signalés.",
-                ProjetPFE.Status.EN_COURS,
+                ProjetPFE.Status.EN_ATTENTE,
             ),
         ):
             projets[key], _ = ProjetPFE.objects.update_or_create(
@@ -248,7 +248,7 @@ class Command(BaseCommand):
                     "sujet": "PFE Machine Learning appliqué",
                     "description": "Mise en place d'un modèle de prédiction des besoins en "
                                    "recrutement et d'une API de scoring.",
-                    "status": ProjetPFE.Status.EN_COURS,
+                    "status": ProjetPFE.Status.PLANIFIE,
                 },
             )
 

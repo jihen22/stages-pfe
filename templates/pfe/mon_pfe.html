@@ -61,6 +61,41 @@
     </div>
   </div>
 
+  {# Lifecycle card #}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3 class="h5 mb-0"><i class="bi bi-signpost-split me-1"></i> Avancement du projet</h3>
+    </div>
+    <div class="card-body">
+      <ol class="list-unstyled row row-cols-2 row-cols-md-5 g-2 mb-0" aria-label="Étapes du projet">
+        {% for etape in projet.etapes %}
+          <li class="col">
+            <div class="border rounded p-2 h-100 text-center small {% if etape.courant %}border-primary bg-primary-subtle fw-semibold{% elif etape.fait %}text-success{% else %}text-muted{% endif %}"
+                 {% if etape.courant %}aria-current="step"{% endif %}>
+              <i class="bi {% if etape.fait %}bi-check-circle-fill{% elif etape.courant %}bi-record-circle{% else %}bi-circle{% endif %} d-block fs-5 mb-1"></i>
+              {{ etape.label }}
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+
+      {% if historique %}
+        <details class="mt-3">
+          <summary class="small text-muted">Historique des changements de statut</summary>
+          <ul class="list-unstyled small mt-2 mb-0">
+            {% for h in historique %}
+              <li class="py-1 border-bottom">
+                <span class="text-muted">{{ h.date|date:"d/m/Y H:i" }}</span> —
+                {% if h.ancien %}{{ h.get_ancien_display }} → {% endif %}<strong>{{ h.get_nouveau_display }}</strong>
+                {% if h.auteur %}<span class="text-muted">par {{ h.auteur.get_full_name|default:h.auteur.username }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
+    </div>
+  </div>
+
   {# Deliverables card #}
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -68,9 +103,13 @@
         <h3 class="h5 mb-0"><i class="bi bi-files me-1"></i> Livrables déposés</h3>
         <span class="text-muted small">Rapports et documents soumis à votre encadrant.</span>
       </div>
-      <a href="{% url 'pfe:deposer_livrable' projet.pk %}" class="btn btn-primary btn-sm">
-        <i class="bi bi-cloud-arrow-up me-1"></i> Déposer un livrable
-      </a>
+      {% if depot_ouvert %}
+        <a href="{% url 'pfe:deposer_livrable' projet.pk %}" class="btn btn-primary btn-sm">
+          <i class="bi bi-cloud-arrow-up me-1"></i> Déposer un livrable
+        </a>
+      {% else %}
+        <span class="badge text-bg-light border"><i class="bi bi-lock me-1"></i> Dépôt fermé</span>
+      {% endif %}
     </div>
 
     {% if livrables %}
@@ -122,9 +161,13 @@
         </table>
       </div>
     {% else %}
-      {% url 'pfe:deposer_livrable' projet.pk as deposer_url %}
       <div class="card-body">
-        {% include "partials/_empty_state.html" with icon="cloud-arrow-up" title="Aucun livrable déposé" text="Vous n'avez pas encore déposé de livrable pour votre PFE." action_url=deposer_url action_label="Déposer un livrable" action_icon="cloud-arrow-up" %}
+        {% if depot_ouvert %}
+          {% url 'pfe:deposer_livrable' projet.pk as deposer_url %}
+          {% include "partials/_empty_state.html" with icon="cloud-arrow-up" title="Aucun livrable déposé" text="Vous n'avez pas encore déposé de livrable pour votre PFE." action_url=deposer_url action_label="Déposer un livrable" action_icon="cloud-arrow-up" %}
+        {% else %}
+          {% include "partials/_empty_state.html" with icon="lock" title="Aucun livrable déposé" text="Le dépôt de livrables est fermé pour ce projet." %}
+        {% endif %}
       </div>
     {% endif %}
   </div>

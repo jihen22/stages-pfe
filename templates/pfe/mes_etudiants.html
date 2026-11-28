@@ -23,6 +23,7 @@
             <th class="text-center">Livrables</th>
             <th>Statut</th>
             <th>Date début</th>
+            <th class="text-end">Cycle de vie</th>
           </tr>
         </thead>
         <tbody>
@@ -66,6 +67,30 @@
                 {% include "partials/_status_badge.html" with status=projet.status label=projet.get_status_display %}
               </td>
               <td class="text-muted small">{{ projet.date_creation|date:"d/m/Y" }}</td>
+              <td class="text-end">
+                {% if projet.peut_terminer %}
+                  <form method="post" action="{% url 'pfe:terminer_projet' projet.pk %}" class="d-inline"
+                        onsubmit="return confirm('Marquer ce projet comme terminé ? Le dépôt de livrables sera fermé.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success text-nowrap">
+                      <i class="bi bi-flag"></i> Terminer
+                    </button>
+                  </form>
+                {% elif projet.peut_rouvrir %}
+                  <form method="post" action="{% url 'pfe:rouvrir_projet' projet.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">
+                      <i class="bi bi-arrow-counterclockwise"></i> Rouvrir
+                    </button>
+                  </form>
+                {% elif projet.status == 'EN_COURS' %}
+                  <span class="small text-muted" title="Au moins un livrable validé et aucun livrable en attente sont nécessaires.">
+                    <i class="bi bi-info-circle"></i> Livrables à valider
+                  </span>
+                {% else %}
+                  <span class="text-muted small">&mdash;</span>
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         </tbody>

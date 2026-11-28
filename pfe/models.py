@@ -8,8 +8,12 @@ class ProjetPFE(models.Model):
     """Projet de Fin d'Études (PFE) associated with a student and supervisors."""
 
     class Status(models.TextChoices):
+        """Lifecycle states. Allowed moves between them live in ``pfe/workflow.py``."""
+
+        EN_ATTENTE = 'EN_ATTENTE', "En attente d'encadrant"
         EN_COURS = 'EN_COURS', 'En cours'
         TERMINE = 'TERMINE', 'Terminé'
+        PLANIFIE = 'PLANIFIE', 'Soutenance planifiée'
         SOUTENU = 'SOUTENU', 'Soutenu'
 
     etudiant = models.ForeignKey(
@@ -42,7 +46,7 @@ class ProjetPFE(models.Model):
         'Statut',
         max_length=20,
         choices=Status.choices,
-        default=Status.EN_COURS,
+        default=Status.EN_ATTENTE,
     )
     date_creation = models.DateTimeField('Date de création', auto_now_add=True)
 
@@ -53,6 +57,60 @@ class ProjetPFE(models.Model):
 
     def __str__(self):
         return self.sujet
+
+    def save(self, *args, **kwargs):
+        """Pick the initial state on creation and record it in the history.
+
+        A new project starts "en attente", or directly "en cours" when it is created
+        with its academic supervisor. Later changes go through ``pfe.workflow``.
+        """
+        adding = self._state.adding
+        if adding and self.encadrant_acad_id and self.status == self.Status.EN_ATTENTE:
+            self.status = self.Status.EN_COURS
+        super().save(*args, **kwargs)
+        if adding:
+            HistoriqueStatut.objects.create(projet=self, ancien='', nouveau=self.status)
+
+    @property
+    def etapes(self):
+        """Main path of the lifecycle with a flag for done / current steps (for the stepper)."""
+        ordre = [self.Status.EN_ATTENTE, self.Status.EN_COURS, self.Status.TERMINE,
+                 self.Status.PLANIFIE, self.Status.SOUTENU]
+        index = ordre.index(self.status)
+        return [
+            {'code': code, 'label': code.label, 'fait': i < index, 'courant': i == index}
+            for i, code in enumerate(ordre)
+        ]
+
+
+class HistoriqueStatut(models.Model):
+    """One line per status change of a PFE project (who, when, from what to what)."""
+
+    projet = models.ForeignKey(
+        ProjetPFE,
+        on_delete=models.CASCADE,
+        related_name='historique',
+        verbose_name='Projet PFE',
+    )
+    ancien = models.CharField('Ancien statut', max_length=20, choices=ProjetPFE.Status.choices, blank=True)
+    nouveau = models.CharField('Nouveau statut', max_length=20, choices=ProjetPFE.Status.choices)
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+        verbose_name='Auteur',
+    )
+    date = models.DateTimeField('Date', auto_now_add=True)
+
+    class Meta:
+        ordering = ['date', 'pk']
+        verbose_name = 'changement de statut'
+        verbose_name_plural = 'historique des statuts'
+
+    def __str__(self):
+        return f'{self.projet} : {self.ancien or "—"} → {self.nouveau}'
 
 
 class Livrable(models.Model):

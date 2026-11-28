@@ -1,10 +1,12 @@
 from django.contrib import messages
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from accounts.mixins import role_required
 from accounts.models import User
 from notifications.services import notify
+from pfe.workflow import ETATS_NOTATION_OUVERTE, TransitionInterdite, appliquer, peut
 
 from .forms import NoteSoutenanceForm, SoutenanceForm
 from .models import NoteSoutenance, Soutenance
@@ -28,6 +30,22 @@ def _notify_soutenance(soutenance):
             f"Vous avez été désigné(e) membre du jury pour la soutenance de « {soutenance.projet.sujet} » le {date_str} (salle {soutenance.salle}).",
             reverse('soutenances:mes_soutenances'),
         )
+
+
+def _cloturer_si_complet(soutenance, auteur):
+    """Move the project to SOUTENU once every jury member has graded it."""
+    projet = soutenance.projet
+    if not peut(projet, 'soutenir'):
+        return
+    try:
+        appliquer(projet, 'soutenir', auteur=auteur)
+    except TransitionInterdite:
+        return  # another jury member closed it at the same time
+    notify(
+        projet.etudiant,
+        f"Votre soutenance pour « {projet.sujet} » est notée : moyenne {soutenance.moyenne}/20.",
+        reverse('soutenances:ma_soutenance'),
+    )
 
 
 @role_required(User.Role.ETUDIANT)
@@ -115,6 +133,12 @@ def saisir_notes(request, pk):
     if not soutenance.jury.filter(pk=request.user.pk).exists():
         messages.error(request, 'Vous ne faites pas partie du jury de cette soutenance.')
         return redirect('soutenances:saisir_notes')
+    if soutenance.projet.status not in ETATS_NOTATION_OUVERTE:
+        messages.error(
+            request,
+            f"La notation n'est pas ouverte : le projet est « {soutenance.projet.get_status_display()} ».",
+        )
+        return redirect('soutenances:saisir_notes')
 
     note_obj = NoteSoutenance.objects.filter(
         soutenance=soutenance,
@@ -134,6 +158,7 @@ def saisir_notes(request, pk):
                 request,
                 f"La note pour le projet « {soutenance.projet.sujet} » a bien été enregistrée.",
             )
+            _cloturer_si_complet(soutenance, request.user)
             return redirect('soutenances:saisir_notes')
     else:
         form = NoteSoutenanceForm(instance=note_obj)
@@ -177,7 +202,13 @@ def planifier_soutenance(request):
                 # Guards the OneToOneField against a race between two admins.
                 form.add_error('projet', 'Ce projet a déjà une soutenance planifiée.')
             else:
-                soutenance = form.save()
+                try:
+                    with transaction.atomic():
+                        soutenance = form.save()
+                        appliquer(projet, 'planifier', auteur=request.user)
+                except TransitionInterdite as exc:
+                    form.add_error('projet', str(exc))
+                    return render(request, 'soutenances/planifier.html', {'form': form})
                 _notify_soutenance(soutenance)
                 messages.success(
                     request,

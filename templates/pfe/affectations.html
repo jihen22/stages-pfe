@@ -121,13 +121,17 @@
                 {% endwith %}
               </td>
               <td class="text-end">
-                <form method="post" action="{% url 'pfe:liberer_projet' projet.pk %}"
-                      onsubmit="return confirm('Retirer ce projet de votre encadrement ?');">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">
-                    <i class="bi bi-x-circle"></i> Retirer
-                  </button>
-                </form>
+                {% if projet.status == 'EN_COURS' %}
+                  <form method="post" action="{% url 'pfe:liberer_projet' projet.pk %}"
+                        onsubmit="return confirm('Retirer ce projet de votre encadrement ?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">
+                      <i class="bi bi-x-circle"></i> Retirer
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="text-muted small">&mdash;</span>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}

@@ -15,4 +15,6 @@ urlpatterns = [
     path('affectations/creer/', views.creer_projet_encadrant, name='creer_projet_encadrant'),
     path('affectations/<int:pk>/prendre/', views.prendre_en_charge, name='prendre_en_charge'),
     path('affectations/<int:pk>/liberer/', views.liberer_projet, name='liberer_projet'),
+    path('<int:pk>/terminer/', views.terminer_projet, name='terminer_projet'),
+    path('<int:pk>/rouvrir/', views.rouvrir_projet, name='rouvrir_projet'),
 ]

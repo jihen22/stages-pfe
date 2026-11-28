@@ -39,7 +39,7 @@
               {{ form.projet.label }} <span class="text-danger">*</span>
             </label>
             {{ form.projet }}
-            <div class="form-text">Sélectionnez le projet PFE qui n'a pas encore de soutenance programmée.</div>
+            <div class="form-text">Seuls les projets marqués « Terminé » par leur encadrant et sans soutenance apparaissent ici.</div>
             {% if form.projet.errors %}
               <div class="invalid-feedback d-block">{{ form.projet.errors|first }}</div>
             {% endif %}

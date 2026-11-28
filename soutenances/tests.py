@@ -54,10 +54,14 @@ class SoutenanceBaseTestCase(TestCase):
             encadrant_acad=cls.encadrant_acad,
             offre=cls.offre,
             sujet='Plateforme de gestion des stages et PFE',
+            status=ProjetPFE.Status.PLANIFIE,
         )
+        # Finished by its supervisor: the only kind of project that can be scheduled.
         cls.projet_sans_soutenance = ProjetPFE.objects.create(
             etudiant=cls.autre_etudiant,
+            encadrant_acad=cls.encadrant_acad,
             sujet='Application mobile Flutter',
+            status=ProjetPFE.Status.TERMINE,
         )
 
         cls.soutenance = Soutenance.objects.create(

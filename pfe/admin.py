@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Livrable, ProjetPFE
+from .models import HistoriqueStatut, Livrable, ProjetPFE
 
 
 class LivrableInline(admin.TabularInline):
@@ -8,6 +8,17 @@ class LivrableInline(admin.TabularInline):
     extra = 0
     fields = ('titre', 'fichier', 'status', 'commentaire_encadrant', 'date_depot')
     readonly_fields = ('date_depot',)
+
+
+class HistoriqueStatutInline(admin.TabularInline):
+    model = HistoriqueStatut
+    extra = 0
+    can_delete = False
+    fields = ('date', 'ancien', 'nouveau', 'auteur')
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(ProjetPFE)
@@ -24,7 +35,9 @@ class ProjetPFEAdmin(admin.ModelAdmin):
         'encadrant_acad__first_name',
         'encadrant_acad__last_name',
     )
-    inlines = [LivrableInline]
+    # The status only changes through the state machine (pfe/workflow.py).
+    readonly_fields = ('status',)
+    inlines = [LivrableInline, HistoriqueStatutInline]
 
 
 @admin.register(Livrable)

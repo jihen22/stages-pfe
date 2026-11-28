@@ -10,6 +10,7 @@ from notifications.services import notify
 
 from .forms import LivrableForm, ProjetEncadrantForm, ProjetPFEForm
 from .models import Livrable, ProjetPFE
+from .workflow import ETATS_DEPOT_OUVERT, TransitionInterdite, appliquer, peut
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +58,15 @@ def _demander_corrections(request, livrable):
 # Student views
 # ---------------------------------------------------------------------------
 
+def _contexte_mon_pfe(projet):
+    return {
+        'projet': projet,
+        'livrables': projet.livrables.all(),
+        'historique': projet.historique.select_related('auteur'),
+        'depot_ouvert': projet.status in ETATS_DEPOT_OUVERT,
+    }
+
+
 @role_required(User.Role.ETUDIANT)
 def mon_pfe(request):
     """Display the student's PFE project or initialize it from an accepted offer."""
@@ -67,10 +77,7 @@ def mon_pfe(request):
     )
 
     if projet:
-        return render(request, 'pfe/mon_pfe.html', {
-            'projet': projet,
-            'livrables': projet.livrables.all(),
-        })
+        return render(request, 'pfe/mon_pfe.html', _contexte_mon_pfe(projet))
 
     # Check if the student has an accepted candidature to auto-create the project
     accepted_cand = (
@@ -86,10 +93,7 @@ def mon_pfe(request):
             description=accepted_cand.offre.description,
         )
         messages.info(request, 'Votre projet PFE a été initialisé depuis votre candidature acceptée.')
-        return render(request, 'pfe/mon_pfe.html', {
-            'projet': projet,
-            'livrables': projet.livrables.all(),
-        })
+        return render(request, 'pfe/mon_pfe.html', _contexte_mon_pfe(projet))
 
     if request.method == 'POST':
         form = ProjetPFEForm(request.POST)
@@ -109,6 +113,12 @@ def mon_pfe(request):
 def deposer_livrable(request, projet_pk):
     """Upload a new deliverable (report, presentation, code archive, etc.)."""
     projet = get_object_or_404(ProjetPFE, pk=projet_pk, etudiant=request.user)
+    if projet.status not in ETATS_DEPOT_OUVERT:
+        messages.error(
+            request,
+            f"Le dépôt de livrables est fermé : le projet est « {projet.get_status_display()} ».",
+        )
+        return redirect('pfe:mon_pfe')
 
     if request.method == 'POST':
         form = LivrableForm(request.POST, request.FILES)
@@ -147,6 +157,9 @@ def mes_etudiants(request):
         .prefetch_related('livrables')
         .order_by('-date_creation')
     )
+    for projet in projets:
+        projet.peut_terminer = peut(projet, 'terminer')
+        projet.peut_rouvrir = peut(projet, 'rouvrir')
     return render(request, 'pfe/mes_etudiants.html', {'projets': projets})
 
 
@@ -220,17 +233,13 @@ def prendre_en_charge(request, pk):
     """Assign the current supervisor to an unassigned project (atomic claim)."""
     projet = get_object_or_404(ProjetPFE.objects.select_related('etudiant'), pk=pk)
 
-    claimed = ProjetPFE.objects.filter(pk=pk, encadrant_acad__isnull=True).update(
-        encadrant_acad=request.user,
-    )
-    if not claimed:
-        if projet.encadrant_acad_id == request.user.pk:
-            messages.info(request, "Vous encadrez déjà ce projet.")
-        else:
-            messages.error(
-                request,
-                "Ce projet a déjà été pris en charge par un autre encadrant.",
-            )
+    if projet.encadrant_acad_id == request.user.pk:
+        messages.info(request, "Vous encadrez déjà ce projet.")
+        return redirect('pfe:affectations')
+    try:
+        appliquer(projet, 'affecter', auteur=request.user, encadrant_acad=request.user)
+    except TransitionInterdite:
+        messages.error(request, "Ce projet a déjà été pris en charge par un autre encadrant.")
         return redirect('pfe:affectations')
 
     supervisor_name = request.user.get_full_name() or request.user.username
@@ -252,7 +261,11 @@ def liberer_projet(request, pk):
         pk=pk,
         encadrant_acad=request.user,
     )
-    ProjetPFE.objects.filter(pk=pk, encadrant_acad=request.user).update(encadrant_acad=None)
+    try:
+        appliquer(projet, 'liberer', auteur=request.user)
+    except TransitionInterdite as exc:
+        messages.error(request, str(exc))
+        return redirect('pfe:affectations')
 
     notify(
         projet.etudiant,
@@ -289,3 +302,46 @@ def creer_projet_encadrant(request):
         form = ProjetEncadrantForm()
 
     return render(request, 'pfe/projet_form.html', {'form': form})
+
+
+# ---------------------------------------------------------------------------
+# Academic supervisor views: lifecycle of their projects
+# ---------------------------------------------------------------------------
+
+def _changer_statut(request, pk, nom, message_etudiant, message_succes):
+    projet = get_object_or_404(
+        ProjetPFE.objects.select_related('etudiant'),
+        pk=pk,
+        encadrant_acad=request.user,
+    )
+    try:
+        appliquer(projet, nom, auteur=request.user)
+    except TransitionInterdite as exc:
+        messages.error(request, str(exc))
+        return redirect('pfe:mes_etudiants')
+
+    notify(projet.etudiant, message_etudiant.format(sujet=projet.sujet), reverse('pfe:mon_pfe'))
+    messages.success(request, message_succes.format(sujet=projet.sujet))
+    return redirect('pfe:mes_etudiants')
+
+
+@role_required(User.Role.ENCADRANT_ACAD)
+@require_POST
+def terminer_projet(request, pk):
+    """Declare the work finished: the project can then be scheduled for a defense."""
+    return _changer_statut(
+        request, pk, 'terminer',
+        "Votre projet « {sujet} » est terminé : il peut maintenant être planifié en soutenance.",
+        "Le projet « {sujet} » est marqué comme terminé.",
+    )
+
+
+@role_required(User.Role.ENCADRANT_ACAD)
+@require_POST
+def rouvrir_projet(request, pk):
+    """Send a finished (not yet scheduled) project back to "en cours"."""
+    return _changer_statut(
+        request, pk, 'rouvrir',
+        "Votre projet « {sujet} » a été rouvert : vous pouvez de nouveau déposer des livrables.",
+        "Le projet « {sujet} » est de nouveau en cours.",
+    )

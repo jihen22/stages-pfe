@@ -9,9 +9,9 @@ Usage:
   <span class="badge rounded-pill text-bg-success">{{ label|default:status }}</span>
 {% elif status == 'REFUSEE' %}
   <span class="badge rounded-pill text-bg-danger">{{ label|default:status }}</span>
-{% elif status == 'EN_ATTENTE' or status == 'EN_VALIDATION' or status == 'CORRECTION_DEMANDEE' %}
+{% elif status == 'EN_ATTENTE' or status == 'EN_VALIDATION' or status == 'A_CORRIGER' or status == 'CORRECTION_DEMANDEE' %}
   <span class="badge rounded-pill text-bg-warning">{{ label|default:status }}</span>
-{% elif status == 'SOUMIS' or status == 'SOUTENANCE_PLANIFIEE' %}
+{% elif status == 'SOUMIS' or status == 'SOUTENANCE_PLANIFIEE' or status == 'PLANIFIE' or status == 'TERMINE' %}
   <span class="badge rounded-pill text-bg-info">{{ label|default:status }}</span>
 {% elif status == 'EN_COURS' %}
   <span class="badge rounded-pill text-bg-primary">{{ label|default:status }}</span>
