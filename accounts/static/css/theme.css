@@ -1297,3 +1297,11 @@ a.dash-row:hover { background: var(--bs-tertiary-bg); }
 @media (max-width: 575.98px) {
   .auth-body { padding: 1.5rem 1.25rem; }
 }
+
+/* Printing (defense notices, item 21): only the page content. */
+@media print {
+  .app-sidebar, .app-topbar, .app-footer, .app-backdrop { display: none !important; }
+  .app-main { margin-left: 0 !important; }
+  .app-content { padding: 0 !important; }
+  .card { border: 0 !important; box-shadow: none !important; }
+}

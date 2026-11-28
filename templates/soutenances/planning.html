@@ -158,6 +158,9 @@
                 {% if soutenance.pk in en_conflit %}
                   <span class="badge text-bg-danger me-1" title="Salle ou jury réservé deux fois">Conflit</span>
                 {% endif %}
+                <a href="{% url 'soutenances:convocation' soutenance.pk %}" class="btn btn-sm btn-outline-secondary" title="Convocation">
+                  <i class="bi bi-envelope-paper"></i><span class="visually-hidden">Convocation</span>
+                </a>
                 {% if soutenance.projet.status == 'PLANIFIE' %}
                   <a href="{% url 'soutenances:modifier' soutenance.pk %}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-pencil"></i> Modifier

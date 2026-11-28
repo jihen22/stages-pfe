@@ -1,18 +1,18 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 2 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 21 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 241 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 253 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
 | accounts | 47 |
 | pfe | 103 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py` + 19 in `test_suggestion.py` + 16 in `test_versions.py`) |
-| soutenances | 59 (17 in `tests.py` + 21 in `test_salles_creneaux.py` + 21 in `test_conflits.py`) |
+| soutenances | 71 (17 in `tests.py` + 21 in `test_salles_creneaux.py` + 21 in `test_conflits.py` + 12 in `test_convocation.py`) |
 | notifications | 10 |
 | candidatures | 3 |
 | offres | 19 |
@@ -31,18 +31,18 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **57 j** | 168 j | **33.9 %** |
-| Non-AI items | **57 j** | 107 j | **53.3 %** |
+| All items | **62 j** | 168 j | **36.9 %** |
+| Non-AI items | **62 j** | 107 j | **57.9 %** |
 
-DONE items: 1 (5 j) + 2 (2 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) + 20 (5 j) = 57 j.
+DONE items: 1 (5 j) + 2 (2 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) + 20 (5 j) + 21 (5 j) = 62 j.
 PARTIAL items count for 0 j.
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 15 | 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19, 20 |
-| PARTIAL | 5 | 21, 22, 35, 36, 38 |
+| DONE | 16 | 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19, 20, 21 |
+| PARTIAL | 4 | 22, 35, 36, 38 |
 | NOT STARTED | 19 | 9, 11, 15, 17, 18, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -70,7 +70,7 @@ PARTIAL items count for 0 j.
 | 18 | Company supervisor approves the generated agreement | 2 | Web | NOT STARTED | Depends on 17. No agreement model. | Everything. |
 | 19 | Plan defenses (juries, rooms, time slots) | 6 | Web | **DONE** | Models: `Salle` and `Creneau` (end after start, unique), `Soutenance.creneau` / `Soutenance.salle` foreign keys (`soutenances/models.py:8-110`), migration `soutenances/migrations/0002_salles_creneaux.py` (converts existing defenses: room names → rooms, dates → 1-hour slots). Rooms and slots page (admin only): `soutenances/views.py:277-347` (`ressources`, `basculer_salle`, `supprimer_creneau`), `templates/soutenances/ressources.html` (add / deactivate rooms, add one slot, generate a day of slots with duration and break). Planning: `SoutenanceForm` (finished project + upcoming slot + active room + jury), `soutenances/views.py:183-232` (grid per day: slots × rooms), `templates/soutenances/planning.html`, `planifier.html`. Tests: `soutenances/test_salles_creneaux.py` (21 tests) | Double bookings (same room / jury / student in one slot) are item 20. |
 | 20 | Detect / fix scheduling conflicts | 5 | Web | **DONE** | Detection: `soutenances/conflits.py` (`conflits_pour`: same room or same jury member in overlapping slots; `detecter_conflits`: whole upcoming planning; `alternatives`: free slot + room for the whole jury, closest first). Prevention: `SoutenanceForm.clean` refuses a conflicting plan or change and the page proposes alternatives (`soutenances/forms.py:54`, `soutenances/views.py:281`). Resolution: `modifier_soutenance` (move / change jury, participants notified, only « soutenance planifiée »), `deplacer_soutenance` (one-click move to a suggestion, re-checked), `conflits` page (`soutenances/views.py:300-370`, `templates/soutenances/conflits.html`). Visibility: conflict cells and badges in `templates/soutenances/planning.html`, alert with count on the planning page and the admin dashboard. Tests: `soutenances/test_conflits.py` (21 tests) | — |
-| 21 | Jury: notice, schedule, reports, grades | 5 | Web | PARTIAL | Schedule: `soutenances/views.py:49-75`, `templates/soutenances/mes_soutenances.html`. Grades: `soutenances/models.py:44-73`, `soutenances/views.py:78-149`, `saisir_note.html`. Tests `soutenances/tests.py:128-188` | No notice (nothing to view/download). The jury cannot open the student's reports (no link to `Livrable` in `templates/soutenances/`). |
+| 21 | Jury: notice, schedule, reports, grades | 5 | Web | **DONE** | Notice: `soutenances/views.py:95` (`convocation`: printable notice with reference, date and time range, room, project, supervisor, jury, instructions; open to that defense's jury, student and the admin), `templates/soutenances/convocation.html`, print styles in `accounts/static/css/theme.css`. Reports: `soutenances/views.py:111` (`dossier`: project + latest version of each deliverable with status and download, jury of that defense and admin only), `templates/soutenances/dossier.html`. Schedule: `mes_soutenances` (links to notice and file). Grades: `saisir_notes` (items 14, 19). Tests: `soutenances/test_convocation.py` (12 tests) | — |
 | 22 | Student: defense schedule + notice | 2 | Web | PARTIAL | `soutenances/views.py:33-46`, `templates/soutenances/ma_soutenance.html` (date, room, jury, average), tests `soutenances/tests.py:113-126` | No notice document. |
 | 23 | Log of critical actions | 3 | Web | NOT STARTED | No log/audit model. Django admin's `LogEntry` does not track the app's views. | Everything. |
 | 24 | Standalone async AI service | 5 | AI | NOT STARTED | No `ia` app, no async worker. | Everything. |
@@ -85,7 +85,7 @@ PARTIAL items count for 0 j.
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 241 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 253 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
@@ -263,3 +263,14 @@ What's left (outside item 20): two admins saving at the very same moment could s
 Files changed: `accounts/views.py`, `templates/accounts/preferences.html`, `templates/partials/_topbar.html`, `accounts/tests.py`.
 
 What's left (outside item 2): nothing.
+
+### Item 21: jury notice and defense file (done 2026-11-28)
+
+- **Convocation**: a printable notice (« Imprimer / Enregistrer en PDF » uses the browser's print; the sidebar and top bar are hidden when printing). It shows a reference (`CONV-<year>-<number>`), the date and time range, room and building, the project, student, supervisors, full jury and instructions adapted to the reader (jury or student).
+- **Dossier de soutenance**: the jury opens the project details and the student's reports, latest version of each with its status and a download link, plus a shortcut to their grade.
+- Only that defense's jury members, its student (notice only) and the admin can open them.
+- No PDF library was added: printing to PDF from the browser is enough here; item 17 (documents) will decide on a library.
+
+Files changed: `soutenances/views.py`, `soutenances/urls.py`, `templates/soutenances/convocation.html` (new), `templates/soutenances/dossier.html` (new), `templates/soutenances/mes_soutenances.html`, `templates/soutenances/planning.html`, `accounts/static/css/theme.css`, `soutenances/test_convocation.py` (new).
+
+What's left (outside item 21): the student's link to their notice is item 22.

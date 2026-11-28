@@ -1,4 +1,6 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import ProtectedError
 from django.utils import timezone
@@ -9,7 +11,7 @@ from django.urls import reverse
 from accounts.mixins import role_required
 from accounts.models import User
 from notifications.services import notify
-from pfe.models import ProjetPFE
+from pfe.models import Livrable, ProjetPFE, regrouper_versions
 from pfe.workflow import ETATS_NOTATION_OUVERTE, TransitionInterdite, appliquer, peut
 
 from .conflits import alternatives, conflits_pour, detecter_conflits, ids_en_conflit
@@ -66,6 +68,62 @@ def _cloturer_si_complet(soutenance, auteur):
         f"Votre soutenance pour « {projet.sujet} » est notée : moyenne {soutenance.moyenne}/20.",
         reverse('soutenances:ma_soutenance'),
     )
+
+
+def _soutenance_detaillee(pk):
+    return get_object_or_404(
+        Soutenance.objects.select_related(
+            'projet', 'projet__etudiant', 'projet__encadrant_acad', 'projet__offre',
+            'projet__offre__encadrant_pro', 'creneau', 'salle',
+        ).prefetch_related('jury'),
+        pk=pk,
+    )
+
+
+def _role_dans_soutenance(user, soutenance):
+    """'etudiant', 'jury' or 'admin' when ``user`` may see this defense, else None."""
+    if user.is_admin_role:
+        return 'admin'
+    if user.pk == soutenance.projet.etudiant_id:
+        return 'etudiant'
+    if user.is_jury and any(m.pk == user.pk for m in soutenance.jury.all()):
+        return 'jury'
+    return None
+
+
+@login_required
+def convocation(request, pk):
+    """Printable defense notice for its student, its jury members and the admin (items 21-22)."""
+    soutenance = _soutenance_detaillee(pk)
+    role = _role_dans_soutenance(request.user, soutenance)
+    if role is None:
+        raise PermissionDenied
+    debut = timezone.localtime(soutenance.creneau.debut)
+    return render(request, 'soutenances/convocation.html', {
+        'soutenance': soutenance,
+        'role': role,
+        'reference': f"CONV-{debut:%Y}-{soutenance.pk:04d}",
+        'jury': list(soutenance.jury.all()),
+    })
+
+
+@role_required(User.Role.JURY, User.Role.ADMIN)
+def dossier(request, pk):
+    """Defense file for the jury: the project and the student's reports (item 21)."""
+    soutenance = _soutenance_detaillee(pk)
+    if _role_dans_soutenance(request.user, soutenance) is None:
+        raise PermissionDenied
+    livrables = list(soutenance.projet.livrables.all())
+    ma_note = None
+    if request.user.is_jury:
+        ma_note = soutenance.notes.filter(jury_member=request.user).first()
+    groupes = regrouper_versions(livrables)
+    return render(request, 'soutenances/dossier.html', {
+        'soutenance': soutenance,
+        'livrables': groupes,
+        'nb_valides': sum(1 for lv, _ in groupes if lv.status == Livrable.Status.VALIDE),
+        'ma_note': ma_note,
+    })
 
 
 @role_required(User.Role.ETUDIANT)
