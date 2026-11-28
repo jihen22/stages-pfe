@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from accounts.models import User
+from accounts.models import Domaine, User
 from candidatures.models import Candidature
 from notifications.models import Notification
 from offres.models import Offre
@@ -125,6 +125,7 @@ class MonPfeViewTests(PfeBaseTestCase):
         self.client.force_login(self.etudiant_sans_projet)
         response = self.client.post(reverse('pfe:mon_pfe'), {
             'sujet': 'Nouveau sujet',
+            'domaine': Domaine.DATA_IA,
             'description': 'Description du sujet.',
         })
         self.assertRedirects(response, reverse('pfe:mon_pfe'))

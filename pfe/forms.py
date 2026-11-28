@@ -5,6 +5,7 @@ from accounts.models import User
 from offres.models import Offre
 
 from .models import Livrable, ProjetPFE
+from .suggestion import raison_refus
 
 
 class ProjetPFEForm(BootstrapFormMixin, forms.ModelForm):
@@ -12,10 +13,15 @@ class ProjetPFEForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = ProjetPFE
-        fields = ('sujet', 'description')
+        fields = ('sujet', 'domaine', 'description')
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Décrivez les objectifs et le contexte du projet…'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Needed to suggest an academic supervisor of the right field (item 10).
+        self.fields['domaine'].required = True
 
 
 class LivrableForm(BootstrapFormMixin, forms.ModelForm):
@@ -45,7 +51,8 @@ class ProjetEncadrantForm(BootstrapFormMixin, forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Objectifs, périmètre et contexte du projet…'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, encadrant=None, **kwargs):
+        self.encadrant = encadrant
         super().__init__(*args, **kwargs)
         # Only students who do not already have a PFE project can be assigned one.
         self.fields['etudiant'].queryset = User.objects.filter(
@@ -58,8 +65,26 @@ class ProjetEncadrantForm(BootstrapFormMixin, forms.ModelForm):
         ).order_by('titre')
         self.fields['offre'].required = False
 
+        if encadrant is not None and encadrant.domaine:
+            # Item 10: a supervisor creates projects in their own field.
+            self.fields['offre'].queryset = self.fields['offre'].queryset.filter(
+                domaine__in=['', encadrant.domaine])
+            self.fields['offre'].help_text = (
+                f"Seules les offres PFE de votre domaine ({encadrant.get_domaine_display()}) sont proposées."
+            )
+
     def clean_etudiant(self):
         etudiant = self.cleaned_data['etudiant']
         if ProjetPFE.objects.filter(etudiant=etudiant).exists():
             raise forms.ValidationError('Cet étudiant a déjà un projet PFE.')
         return etudiant
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.encadrant is not None:
+            offre = cleaned.get('offre')
+            self.instance.domaine = (offre.domaine if offre and offre.domaine else self.encadrant.domaine)
+            erreur = raison_refus(self.instance, self.encadrant)
+            if erreur:
+                raise forms.ValidationError(erreur)
+        return cleaned

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 
+from accounts.models import Domaine
 from offres.models import Offre
 
 
@@ -41,6 +42,13 @@ class ProjetPFE(models.Model):
         verbose_name='Offre',
     )
     sujet = models.CharField('Sujet', max_length=300)
+    domaine = models.CharField(
+        'Domaine',
+        max_length=30,
+        choices=Domaine.choices,
+        blank=True,
+        help_text="Sert à proposer un encadrant académique de ce domaine.",
+    )
     description = models.TextField('Description', blank=True)
     status = models.CharField(
         'Statut',

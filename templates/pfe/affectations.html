@@ -9,12 +9,42 @@
       <i class="bi bi-arrow-left"></i> Retour au tableau de bord
     </a>
     <h1 class="h3 mb-1">Projets à encadrer</h1>
-    <p class="text-muted mb-0">Prenez en charge les projets en attente, ou créez un sujet pour un étudiant.</p>
+    <p class="text-muted mb-0">
+      Prenez en charge les projets en attente de votre domaine
+      {% if user.domaine %}(<strong>{{ user.get_domaine_display }}</strong>){% endif %},
+      ou créez un sujet pour un étudiant.
+    </p>
   </div>
   <a href="{% url 'pfe:creer_projet_encadrant' %}" class="btn btn-primary">
     <i class="bi bi-plus-lg"></i> Créer un projet pour un étudiant
   </a>
 </div>
+
+{% if capacite_atteinte %}
+  <div class="alert alert-warning d-flex gap-2" role="alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <div>
+      Votre capacité d'encadrement est atteinte ({{ ma_charge }} / {{ user.capacite_encadrement }} projets actifs) :
+      vous ne pouvez pas prendre de nouveau projet. <a href="{% url 'pfe:ma_charge' %}">Voir ma charge</a>
+    </div>
+  </div>
+{% elif not user.domaine %}
+  <div class="alert alert-warning d-flex gap-2" role="alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    <div>
+      Votre domaine d'expertise n'est pas renseigné : vous ne pouvez prendre que les projets sans domaine.
+      Demandez à l'administration de le renseigner.
+    </div>
+  </div>
+{% elif nb_recommandes %}
+  <div class="alert alert-info d-flex gap-2" role="status">
+    <i class="bi bi-stars"></i>
+    <div>
+      <strong>{{ nb_recommandes }}</strong> projet{{ nb_recommandes|pluralize }} vous {{ nb_recommandes|pluralize:"est,sont" }}
+      suggéré{{ nb_recommandes|pluralize }} selon votre domaine et votre charge.
+    </div>
+  </div>
+{% endif %}
 
 {# Projects waiting for an academic supervisor #}
 <div class="card mb-4">
@@ -29,14 +59,15 @@
           <tr>
             <th>Étudiant</th>
             <th>Sujet PFE</th>
+            <th>Domaine</th>
+            <th>Encadrants suggérés</th>
             <th>Entreprise / Offre</th>
-            <th>Créé le</th>
             <th class="text-end">Action</th>
           </tr>
         </thead>
         <tbody>
           {% for projet in disponibles %}
-            <tr>
+            <tr{% if projet.recommande %} class="table-primary"{% endif %}>
               <td>
                 <div class="fw-semibold">
                   {{ projet.etudiant.get_full_name|default:projet.etudiant.username }}
@@ -45,8 +76,35 @@
               </td>
               <td>
                 <div class="fw-semibold">{{ projet.sujet }}</div>
+                {% if projet.recommande %}
+                  <span class="badge text-bg-primary"><i class="bi bi-stars"></i> Suggéré pour vous</span>
+                {% endif %}
                 {% if projet.description %}
                   <div class="text-muted small">{{ projet.description|truncatechars:90 }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if projet.domaine %}
+                  <span class="badge text-bg-light border">{{ projet.get_domaine_display }}</span>
+                {% else %}
+                  <span class="text-muted small">Non précisé</span>
+                {% endif %}
+              </td>
+              <td class="small">
+                {% if projet.suggestions %}
+                  <ol class="list-unstyled mb-0">
+                    {% for s in projet.suggestions %}
+                      <li class="mb-1" title="{{ s.raisons|join:' · ' }}">
+                        <span class="badge text-bg-secondary tabular-nums">{{ s.score }}</span>
+                        <span class="{% if s.encadrant.pk == user.pk %}fw-semibold{% endif %}">
+                          {{ s.encadrant.get_full_name|default:s.encadrant.username }}{% if s.encadrant.pk == user.pk %} (vous){% endif %}
+                        </span>
+                        <div class="text-muted">{{ s.raisons|join:" · " }}</div>
+                      </li>
+                    {% endfor %}
+                  </ol>
+                {% else %}
+                  <span class="text-muted">Aucun encadrant disponible dans ce domaine</span>
                 {% endif %}
               </td>
               <td>
@@ -59,14 +117,21 @@
                   <span class="text-muted small">Projet autonome</span>
                 {% endif %}
               </td>
-              <td class="text-nowrap">{{ projet.date_creation|date:"d/m/Y" }}</td>
               <td class="text-end">
-                <form method="post" action="{% url 'pfe:prendre_en_charge' projet.pk %}">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-primary text-nowrap">
-                    <i class="bi bi-hand-index-thumb"></i> Prendre en charge
+                {% if projet.raison_refus %}
+                  <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" disabled
+                          title="{{ projet.raison_refus }}" aria-describedby="refus-{{ projet.pk }}">
+                    <i class="bi bi-lock"></i> Prendre en charge
                   </button>
-                </form>
+                  <div id="refus-{{ projet.pk }}" class="small text-muted mt-1" style="max-width: 14rem; margin-left: auto;">{{ projet.raison_refus }}</div>
+                {% else %}
+                  <form method="post" action="{% url 'pfe:prendre_en_charge' projet.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                      <i class="bi bi-hand-index-thumb"></i> Prendre en charge
+                    </button>
+                  </form>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}

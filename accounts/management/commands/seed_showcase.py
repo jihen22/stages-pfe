@@ -196,6 +196,14 @@ class Command(BaseCommand):
         offre_pfe.save()
 
         # -- projects ------------------------------------------------------
+        # Field of each project: used to suggest an academic supervisor (item 10).
+        domaines = {
+            "sami": Domaine.GENIE_LOGICIEL,
+            "ines": Domaine.GENIE_LOGICIEL,
+            "yassine": Domaine.CYBERSECURITE,
+            "nour": Domaine.DATA_IA,
+            "jihen": Domaine.DATA_IA,
+        }
         projets = {}
         for key, user, encadrant, offre, sujet, description, status in (
             (
@@ -235,6 +243,7 @@ class Command(BaseCommand):
                     "sujet": sujet,
                     "description": description,
                     "status": status,
+                    "domaine": domaines[key],
                 },
             )
 
@@ -249,6 +258,7 @@ class Command(BaseCommand):
                     "description": "Mise en place d'un modèle de prédiction des besoins en "
                                    "recrutement et d'une API de scoring.",
                     "status": ProjetPFE.Status.PLANIFIE,
+                    "domaine": domaines["jihen"],
                 },
             )
 

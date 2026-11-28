@@ -1,17 +1,17 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 5 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 10 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 155 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 174 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
 | accounts | 38 |
-| pfe | 68 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py`) |
+| pfe | 87 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py` + 19 in `test_suggestion.py`) |
 | soutenances | 17 |
 | notifications | 10 |
 | candidatures | 3 |
@@ -31,18 +31,18 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **34 j** | 168 j | **20.2 %** |
-| Non-AI items | **34 j** | 107 j | **31.8 %** |
+| All items | **40 j** | 168 j | **23.8 %** |
+| Non-AI items | **40 j** | 107 j | **37.4 %** |
 
-DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 34 j.
+DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 40 j.
 PARTIAL items count for 0 j.
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 10 | 1, 3, 4, 5, 6, 7, 8, 13, 14, 16 |
-| PARTIAL | 9 | 2, 10, 12, 19, 21, 22, 35, 36, 38 |
+| DONE | 11 | 1, 3, 4, 5, 6, 7, 8, 10, 13, 14, 16 |
+| PARTIAL | 8 | 2, 12, 19, 21, 22, 35, 36, 38 |
 | NOT STARTED | 20 | 9, 11, 15, 17, 18, 20, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -59,7 +59,7 @@ PARTIAL items count for 0 j.
 | 7 | Track my application + notifications | 4 | Web | **DONE** | `candidatures/views.py:20-29, 98-125`, `templates/candidatures/mes_candidatures.html`, `notifications/models.py`, `notifications/services.py`, `notifications/views.py`, `notifications/context_processors.py`, tests `notifications/tests.py:38-130` | In-app notifications only, no email (not required). |
 | 8 | Company supervisor sees applications received | 2 | Web | **DONE** | `candidatures/views.py:76-125` (list, filter by offer, accept/refuse), `templates/candidatures/candidatures_recues.html`, tests `candidatures/tests.py:76-81`, `notifications/tests.py:71-90` | — |
 | 9 | Anonymised data collection for AI | 3 | AI | NOT STARTED | No `ia` app in `INSTALLED_APPS` (`crud/settings.py:28-42`). | Everything. |
-| 10 | Academic supervisor assigns a PFE (+ suggestion by field/workload) | 6 | Mixed | PARTIAL | `pfe/views.py:197-291` (`affectations`, atomic `prendre_en_charge`, `liberer_projet`, `creer_projet_encadrant`), `pfe/forms.py:32-65`, `templates/pfe/affectations.html`, `projet_form.html`, tests `pfe/tests.py:235-365` | No suggestion by field or workload (no field data, no workload count). No empty AI extension point (required by CLAUDE.md for mixed items). |
+| 10 | Academic supervisor assigns a PFE (+ suggestion by field/workload) | 6 | Mixed | **DONE** | Project field: `ProjetPFE.domaine` (`pfe/models.py:45-51`, migrations `pfe/migrations/0004_projetpfe_domaine.py` + `0005_domaine_depuis_offre.py`), required when a student declares a project (`pfe/forms.py`), copied from the offer for an accepted application (`pfe/views.py:96`). Suggestion: `pfe/suggestion.py` (`suggerer_encadrants`: same field + free places, score /100 with reasons; `raison_refus`; **empty AI hook `ajuster_par_ia`**). Rules: field + capacity enforced in the `affecter` guard (`pfe/workflow.py:37`) and in the creation form (`ProjetEncadrantForm.clean`, offers limited to the supervisor's field). Screen: `pfe/views.py:220-254`, `templates/pfe/affectations.html` (field, suggested supervisors with scores and reasons, « Suggéré pour vous » first, locked button with reason, capacity / missing-field alerts). Tests: `pfe/test_suggestion.py` (19 tests) | AI part (re-ranking, explanations) waits for the `ia` app: items 24–27 plug into `ajuster_par_ia`. |
 | 11 | Discussion space between student and supervisor | 4 | Web | NOT STARTED | No message/thread model. `Livrable.commentaire_encadrant` (`pfe/models.py:81`) is a one-way comment on a deliverable. | Everything. |
 | 12 | Upload deliverables with version history | 4 | Web | PARTIAL | `pfe/models.py:58-90` (`Livrable`), `pfe/views.py:108-134`, `templates/pfe/deposer_livrable.html`, `mon_pfe.html`, tests `pfe/tests.py:154-185` | No version history: no version number and no link between successive uploads of the same deliverable. |
 | 13 | Approve a deliverable / ask for a correction | 3 | Web | **DONE** | `pfe/views.py:19-53, 153-190`, `pfe/urls.py`, `templates/pfe/livrables_a_valider.html`, tests `pfe/tests.py:187-233` | — |
@@ -85,25 +85,25 @@ PARTIAL items count for 0 j.
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 155 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 174 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
 
 ## Next 5 non-AI items to build (dependency order)
 
-1. **Item 10: assign a PFE by field and workload, with an empty AI hook** (6 j).
-   - Uses `User.domaine` (item 4) and `annoter_charge` from `pfe/charge.py` (item 16).
-2. **Item 12: version history for deliverables** (4 j).
+1. **Item 12: version history for deliverables** (4 j).
    - Needed before the jury can read the reports (21). AI similarity (30) needs it later.
-3. **Item 19: plan defenses with rooms and time slots** (6 j).
+2. **Item 19: plan defenses with rooms and time slots** (6 j).
    - Builds on the `TERMINE → PLANIFIE` transition. Conflict detection (20) needs rooms and slots.
-4. **Item 20: detect and fix scheduling conflicts** (5 j).
+3. **Item 20: detect and fix scheduling conflicts** (5 j).
    - Needs the rooms and slots from item 19.
-5. **Item 17: admin generates documents (agreement, certificate, minutes)** (5 j).
+4. **Item 17: admin generates documents (agreement, certificate, minutes)** (5 j).
    - The certificate and minutes depend on the « soutenu » state and the grades (items 14, 21).
+5. **Item 18: company supervisor approves the generated agreement** (2 j).
+   - Needs the agreement from item 17.
 
-After these: 18 (agreement) → 21 / 22 (notices, reports for the jury) → 11, 15, 23.
+After these: 21 / 22 (notices, reports for the jury) → 11, 15, 23.
 
 
 ## Change log
@@ -182,3 +182,21 @@ Files changed:
 - Tests: `offres/tests.py` (new `OffreSearchTests`, 10 tests)
 
 What's left (outside item 5): nothing.
+
+### Item 10: assign a PFE by field and workload (done 2026-11-28)
+
+- Every project has a field: chosen by the student who declares it, taken from the offer for an accepted application, or the supervisor's field when they create it. Existing projects got their offer's field (migration 0005); the others stay without a field and remain open to every supervisor.
+- **Suggestion** (web part, rule based): eligible supervisors have the project's field and free places. Score /100 = 60 for the field (30 if the project has no field) + up to 40 for free places / capacity. The top 3 are shown with their reasons.
+- **Rules**: a supervisor can only take or create a project of their field, and only under their capacity (defended projects don't count). Enforced in the state machine guard, so every path applies it.
+- **AI extension point**: `pfe.suggestion.ajuster_par_ia(projet, suggestions)` returns the ranking unchanged; the `ia` app will replace it (a test checks the hook is called with the ranking).
+
+Files changed:
+- Model and migrations: `pfe/models.py`, `pfe/migrations/0004_projetpfe_domaine.py`, `pfe/migrations/0005_domaine_depuis_offre.py`
+- Suggestion and rules: `pfe/suggestion.py` (new), `pfe/workflow.py`, `pfe/forms.py`, `pfe/views.py`
+- Templates: `templates/pfe/affectations.html`, `templates/pfe/projet_form.html`
+- Demo data: `accounts/management/commands/seed_showcase.py` (fields of the demo projects)
+- Tests: `pfe/test_suggestion.py` (new), `pfe/tests.py` (declaration now sends a field)
+
+Checked: migrations on a copy of the real database; assignment page rendered for both demo supervisors (each sees their field's project suggested, the other one locked with its reason).
+
+What's left (outside item 10): the AI re-ranking itself (items 24–27).

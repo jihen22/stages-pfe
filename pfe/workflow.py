@@ -21,6 +21,7 @@ from typing import Callable, Optional
 from django.db import transaction
 
 from .models import HistoriqueStatut, Livrable, ProjetPFE
+from .suggestion import raison_refus
 
 S = ProjetPFE.Status
 
@@ -38,7 +39,8 @@ def _garde_affecter(projet, encadrant_acad=None, **_):
         return "Un encadrant académique est nécessaire pour démarrer le projet."
     if projet.encadrant_acad_id:
         return "Ce projet a déjà un encadrant académique."
-    return None
+    # Item 10: same field as the supervisor, and room left under their capacity.
+    return raison_refus(projet, encadrant_acad)
 
 
 def _garde_terminer(projet, **_):

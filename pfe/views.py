@@ -9,6 +9,7 @@ from candidatures.models import Candidature
 from notifications.services import notify
 
 from .charge import charge_encadrant
+from .suggestion import encadrants_avec_charge, raison_refus, suggerer_encadrants
 from .forms import LivrableForm, ProjetEncadrantForm, ProjetPFEForm
 from .models import Livrable, ProjetPFE
 from .workflow import ETATS_DEPOT_OUVERT, TransitionInterdite, appliquer, peut
@@ -92,6 +93,7 @@ def mon_pfe(request):
             offre=accepted_cand.offre,
             sujet=accepted_cand.offre.titre,
             description=accepted_cand.offre.description,
+            domaine=accepted_cand.offre.domaine,
         )
         messages.info(request, 'Votre projet PFE a été initialisé depuis votre candidature acceptée.')
         return render(request, 'pfe/mon_pfe.html', _contexte_mon_pfe(projet))
@@ -218,7 +220,7 @@ def corriger_livrable(request, pk):
 def affectations(request):
     """List projects waiting for a supervisor and the ones this supervisor already runs."""
     related = ('etudiant', 'offre', 'offre__encadrant_pro')
-    disponibles = (
+    disponibles = list(
         ProjetPFE.objects.filter(encadrant_acad__isnull=True)
         .select_related(*related)
         .order_by('-date_creation')
@@ -228,9 +230,24 @@ def affectations(request):
         .select_related(*related)
         .order_by('-date_creation')
     )
+
+    # Item 10: rank supervisors for every waiting project (one query for all).
+    encadrants = encadrants_avec_charge()
+    moi = next((e for e in encadrants if e.pk == request.user.pk), None)
+    ma_charge = moi.charge_active if moi else 0
+    for projet in disponibles:
+        projet.suggestions = suggerer_encadrants(projet, encadrants)
+        projet.raison_refus = raison_refus(projet, request.user, charge=ma_charge)
+        projet.recommande = bool(projet.suggestions) and projet.suggestions[0].encadrant.pk == request.user.pk
+    # Projects recommended for me first, then the ones I can take, then the others.
+    disponibles.sort(key=lambda p: (not p.recommande, p.raison_refus is not None))
+
     return render(request, 'pfe/affectations.html', {
         'disponibles': disponibles,
         'mes_projets': mes_projets,
+        'nb_recommandes': sum(p.recommande for p in disponibles),
+        'capacite_atteinte': ma_charge >= request.user.capacite_encadrement,
+        'ma_charge': ma_charge,
     })
 
 
@@ -245,8 +262,12 @@ def prendre_en_charge(request, pk):
         return redirect('pfe:affectations')
     try:
         appliquer(projet, 'affecter', auteur=request.user, encadrant_acad=request.user)
-    except TransitionInterdite:
-        messages.error(request, "Ce projet a déjà été pris en charge par un autre encadrant.")
+    except TransitionInterdite as exc:
+        projet.refresh_from_db()
+        if projet.encadrant_acad_id:
+            messages.error(request, "Ce projet a déjà été pris en charge par un autre encadrant.")
+        else:
+            messages.error(request, str(exc))
         return redirect('pfe:affectations')
 
     supervisor_name = request.user.get_full_name() or request.user.username
@@ -287,7 +308,7 @@ def liberer_projet(request, pk):
 def creer_projet_encadrant(request):
     """Create a PFE project for a student who does not have one yet."""
     if request.method == 'POST':
-        form = ProjetEncadrantForm(request.POST)
+        form = ProjetEncadrantForm(request.POST, encadrant=request.user)
         if form.is_valid():
             projet = form.save(commit=False)
             projet.encadrant_acad = request.user
@@ -306,7 +327,7 @@ def creer_projet_encadrant(request):
             )
             return redirect('pfe:affectations')
     else:
-        form = ProjetEncadrantForm()
+        form = ProjetEncadrantForm(encadrant=request.user)
 
     return render(request, 'pfe/projet_form.html', {'form': form})
 
