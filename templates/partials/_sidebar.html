@@ -63,12 +63,12 @@
         <a class="nav-link {% if rn == 'livrables_a_valider' %}active{% endif %}" href="{% url 'pfe:livrables_a_valider' %}">
           <i class="bi bi-clipboard-check"></i> Livrables à valider
         </a>
-
-      {% elif user.role == 'ADMIN' %}
-        <div class="app-sidebar-section">Pilotage</div>
         <a class="nav-link {% if rn == 'offres_a_valider' %}active{% endif %}" href="{% url 'offres:offres_a_valider' %}">
           <i class="bi bi-patch-check"></i> Offres à valider
         </a>
+
+      {% elif user.role == 'ADMIN' %}
+        <div class="app-sidebar-section">Pilotage</div>
         <a class="nav-link {% if rn == 'planning' %}active{% endif %}" href="{% url 'soutenances:planning' %}">
           <i class="bi bi-calendar3"></i> Planning soutenances
         </a>

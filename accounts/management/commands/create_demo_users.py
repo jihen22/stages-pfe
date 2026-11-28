@@ -6,7 +6,7 @@ Usage:
 
 from django.core.management.base import BaseCommand
 
-from accounts.models import User
+from accounts.models import Domaine, User
 
 DEMO_PASSWORD = 'demo1234'
 
@@ -31,6 +31,7 @@ DEMO_USERS = [
         'first_name': 'Leila',
         'last_name': 'Mansouri',
         'email': 'encadrant.acad@example.com',
+        'domaine': Domaine.DATA_IA,
     },
     {
         'username': 'admin',

@@ -10,6 +10,7 @@ from django.views.generic import CreateView
 
 from candidatures.models import Candidature
 from offres.models import Offre
+from offres.views import offres_a_valider_pour
 from pfe.models import ProjetPFE
 
 from .forms import BootstrapAuthenticationForm, BootstrapPasswordChangeForm, ProfilEtudiantForm, StudentRegistrationForm , EncadrantProRegistrationForm , ProfilEncadrantProForm, UserInfoForm
@@ -113,6 +114,7 @@ def dashboard_encadrant_pro(request):
 def dashboard_encadrant_acad(request):
     context = {
         'projets_disponibles': ProjetPFE.objects.filter(encadrant_acad__isnull=True).count(),
+        'offres_a_valider': offres_a_valider_pour(request.user).count(),
     }
     return render(request, 'accounts/dashboards/encadrant_acad.html', context)
 

@@ -18,25 +18,25 @@ from django.core.management.base import BaseCommand
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import ProfilEtudiant, User
+from accounts.models import Domaine, ProfilEtudiant, User
 from candidatures.models import Candidature
 from notifications.models import Notification
 from offres.models import Offre
 
-# (titre, type, status, competences, duree)
+# (titre, type, status, competences, duree, domaine)
 OFFRES = [
     ('Stage Développement Web Django', Offre.Type.STAGE, Offre.Status.PUBLIEE,
-     'Python, Django, HTML/CSS', '3 mois'),
+     'Python, Django, HTML/CSS', '3 mois', Domaine.GENIE_LOGICIEL),
     ('PFE Machine Learning appliqué', Offre.Type.PFE, Offre.Status.PUBLIEE,
-     'Python, scikit-learn, pandas', '6 mois'),
+     'Python, scikit-learn, pandas', '6 mois', Domaine.DATA_IA),
     ('PFE Application mobile Flutter', Offre.Type.PFE, Offre.Status.PUBLIEE,
-     'Dart, Flutter, REST', '6 mois'),
+     'Dart, Flutter, REST', '6 mois', Domaine.GENIE_LOGICIEL),
     ('Stage Data Analyst', Offre.Type.STAGE, Offre.Status.EN_VALIDATION,
-     'SQL, Power BI, Excel', '4 mois'),
+     'SQL, Power BI, Excel', '4 mois', Domaine.DATA_IA),
     ('PFE Sécurité des systèmes', Offre.Type.PFE, Offre.Status.BROUILLON,
-     'Linux, Réseaux, Pentest', '6 mois'),
+     'Linux, Réseaux, Pentest', '6 mois', Domaine.CYBERSECURITE),
     ('Stage DevOps / Cloud', Offre.Type.STAGE, Offre.Status.REFUSEE,
-     'Docker, CI/CD, AWS', '3 mois'),
+     'Docker, CI/CD, AWS', '3 mois', Domaine.RESEAUX),
 ]
 
 CANDIDATURE_MOTIF = (
@@ -65,7 +65,7 @@ class Command(BaseCommand):
     # -- Offers -------------------------------------------------------------
     def _seed_offres(self, encadrant):
         offres = []
-        for titre, type_, status, competences, duree in OFFRES:
+        for titre, type_, status, competences, duree, domaine in OFFRES:
             offre, _ = Offre.objects.update_or_create(
                 encadrant_pro=encadrant,
                 titre=titre,
@@ -74,6 +74,7 @@ class Command(BaseCommand):
                     'competences': competences,
                     'duree': duree,
                     'type': type_,
+                    'domaine': domaine,
                     'status': status,
                     'date_publication': timezone.now() if status == Offre.Status.PUBLIEE else None,
                 },

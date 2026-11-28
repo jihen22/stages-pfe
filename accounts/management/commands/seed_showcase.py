@@ -20,7 +20,7 @@ from django.core.files.base import File
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from accounts.models import ProfilEtudiant, User
+from accounts.models import Domaine, ProfilEtudiant, User
 from offres.models import Offre
 from pfe.models import Livrable, ProjetPFE
 from soutenances.models import NoteSoutenance, Soutenance
@@ -100,9 +100,10 @@ def resolve_report(explicit=None):
     return FALLBACK_REPORT
 
 
-def ensure_user(username, role, first_name, last_name, email):
+def ensure_user(username, role, first_name, last_name, email, domaine=''):
     user, _ = User.objects.get_or_create(username=username)
     user.role = role
+    user.domaine = domaine
     user.first_name = first_name
     user.last_name = last_name
     user.email = email
@@ -143,9 +144,11 @@ class Command(BaseCommand):
                                 "mehdi.ayari@example.com")
 
         encadrant_acad = ensure_user("encadrant_acad", User.Role.ENCADRANT_ACAD, "Leila",
-                                     "Mansouri", "encadrant.acad@example.com")
+                                     "Mansouri", "encadrant.acad@example.com",
+                                     Domaine.DATA_IA)
         encadrant_acad2 = ensure_user("encadrant_acad2", User.Role.ENCADRANT_ACAD, "Ridha",
-                                      "Ben Salah", "ridha.bensalah@example.com")
+                                      "Ben Salah", "ridha.bensalah@example.com",
+                                      Domaine.GENIE_LOGICIEL)
         encadrant_pro = ensure_user("encadrant_pro", User.Role.ENCADRANT_PRO, "Karim",
                                     "Trabelsi", "encadrant.pro@example.com")
         ensure_user("admin", User.Role.ADMIN, "Nadia", "Gharbi", "admin@example.com")
@@ -186,6 +189,7 @@ class Command(BaseCommand):
         offre_pfe.competences = "Python, Django, Bootstrap, SQLite"
         offre_pfe.duree = "6 mois"
         offre_pfe.type = Offre.Type.PFE
+        offre_pfe.domaine = Domaine.GENIE_LOGICIEL
         offre_pfe.status = Offre.Status.PUBLIEE
         if offre_pfe.date_publication is None:
             offre_pfe.date_publication = timezone.now()

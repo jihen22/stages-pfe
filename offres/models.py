@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
+from accounts.models import Domaine
+
 
 class Offre(models.Model):
     """A job/internship offer published by a company supervisor."""
@@ -26,6 +28,13 @@ class Offre(models.Model):
     description = models.TextField('Description')
     competences = models.CharField('Compétences requises', max_length=255, blank=True)
     duree = models.CharField('Durée', max_length=100, blank=True, help_text='Ex : 6 mois')
+    domaine = models.CharField(
+        'Domaine',
+        max_length=30,
+        choices=Domaine.choices,
+        blank=True,
+        help_text="L'offre est validée par un encadrant académique de ce domaine.",
+    )
     type = models.CharField('Type', max_length=20, choices=Type.choices, default=Type.STAGE)
     status = models.CharField('Statut', max_length=20, choices=Status.choices, default=Status.BROUILLON)
     motif_refus = models.TextField('Motif du refus', blank=True)

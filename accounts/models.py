@@ -6,6 +6,16 @@ from django.dispatch import receiver
 from django.urls import reverse
 
 
+class Domaine(models.TextChoices):
+    """Fields of expertise shared by offers and academic supervisors."""
+
+    GENIE_LOGICIEL = 'GENIE_LOGICIEL', 'Génie logiciel'
+    DATA_IA = 'DATA_IA', 'Data science et IA'
+    RESEAUX = 'RESEAUX', 'Réseaux et télécommunications'
+    CYBERSECURITE = 'CYBERSECURITE', 'Cybersécurité'
+    SYSTEMES_EMBARQUES = 'SYSTEMES_EMBARQUES', 'Systèmes embarqués et IoT'
+
+
 class User(AbstractUser):
     """Custom user with a ``role`` used to drive dashboards and permissions."""
 
@@ -44,6 +54,13 @@ class User(AbstractUser):
         max_length=10,
         choices=Accent.choices,
         default=Accent.BLUE,
+    )
+    domaine = models.CharField(
+        "Domaine d'expertise",
+        max_length=30,
+        choices=Domaine.choices,
+        blank=True,
+        help_text='Pour les encadrants académiques : les offres de ce domaine leur sont soumises.',
     )
 
     class Meta:

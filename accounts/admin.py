@@ -6,15 +6,15 @@ from .models import ProfilEtudiant, ProfilEncadrantPro, User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'first_name', 'last_name', 'email', 'role', 'is_staff')
-    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active')
+    list_display = ('username', 'first_name', 'last_name', 'email', 'role', 'domaine', 'is_staff')
+    list_filter = ('role', 'domaine', 'is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'first_name', 'last_name', 'email')
 
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('Rôle', {'fields': ('role',)}),
+        ('Rôle', {'fields': ('role', 'domaine')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Rôle', {'fields': ('role',)}),
+        ('Rôle', {'fields': ('role', 'domaine')}),
     )
 
 

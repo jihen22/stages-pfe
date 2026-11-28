@@ -12,7 +12,7 @@ urlpatterns = [
     path('mes-offres/', views.MesOffresListView.as_view(), name='mes_offres'),
     path('nouvelle/', views.OffreCreateView.as_view(), name='offre_create'),
 
-    # Administration
+    # Academic supervisors
     path('a-valider/', views.OffresAValiderListView.as_view(), name='offres_a_valider'),
 
     # Item routes (keep after the static ones)

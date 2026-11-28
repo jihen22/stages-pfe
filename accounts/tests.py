@@ -34,13 +34,16 @@ class RoleProtectionTests(TestCase):
         cls.admin = User.objects.create_user(
             username='admin', password='demo1234', role=User.Role.ADMIN
         )
+        cls.encadrant_acad = User.objects.create_user(
+            username='acad', password='demo1234', role=User.Role.ENCADRANT_ACAD
+        )
 
     def test_anonymous_is_redirected_to_login(self):
         response = self.client.get(reverse('offres:offres_a_valider'))
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('accounts:login'), response.url)
 
-    def test_student_cannot_access_admin_offers_page(self):
+    def test_student_cannot_access_offers_to_validate(self):
         self.client.force_login(self.etudiant)
         response = self.client.get(reverse('offres:offres_a_valider'))
         self.assertEqual(response.status_code, 403)
@@ -50,13 +53,18 @@ class RoleProtectionTests(TestCase):
         response = self.client.get(reverse('offres:offre_create'))
         self.assertEqual(response.status_code, 403)
 
-    def test_encadrant_pro_cannot_access_admin_offers_page(self):
+    def test_encadrant_pro_cannot_access_offers_to_validate(self):
         self.client.force_login(self.encadrant_pro)
         response = self.client.get(reverse('offres:offres_a_valider'))
         self.assertEqual(response.status_code, 403)
 
-    def test_admin_can_access_admin_offers_page(self):
+    def test_admin_cannot_access_offers_to_validate(self):
         self.client.force_login(self.admin)
+        response = self.client.get(reverse('offres:offres_a_valider'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_academic_supervisor_can_access_offers_to_validate(self):
+        self.client.force_login(self.encadrant_acad)
         response = self.client.get(reverse('offres:offres_a_valider'))
         self.assertEqual(response.status_code, 200)
 
@@ -92,11 +100,10 @@ class PageSmokeTests(TestCase):
         User.Role.ENCADRANT_ACAD: [
             'accounts:dashboard_encadrant_acad', 'pfe:affectations',
             'pfe:creer_projet_encadrant', 'pfe:mes_etudiants', 'pfe:livrables_a_valider',
-            'notifications:list',
+            'offres:offres_a_valider', 'notifications:list',
         ],
         User.Role.ADMIN: [
-            'accounts:dashboard_admin', 'offres:offres_a_valider',
-            'soutenances:planning', 'notifications:list',
+            'accounts:dashboard_admin', 'soutenances:planning', 'notifications:list',
         ],
         User.Role.JURY: [
             'accounts:dashboard_jury', 'soutenances:mes_soutenances', 'soutenances:saisir_notes',

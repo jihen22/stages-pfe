@@ -33,6 +33,7 @@
             </div>
             {% include "offres/_champ.html" with field=form.titre %}
             {% include "offres/_champ.html" with field=form.type %}
+            {% include "offres/_champ.html" with field=form.domaine %}
           </div>
 
           {# ÉTAPE 2 #}
@@ -44,7 +45,7 @@
 
           {# ÉTAPE 3 : récapitulatif rempli par le JS #}
           <div data-step="3" class="d-none">
-            <p>Vérifiez votre offre. Une fois soumise, elle sera relue et validée avant d'être visible par les étudiants.</p>
+            <p>Vérifiez votre offre. Une fois soumise, elle sera relue et validée par un encadrant académique du domaine choisi avant d'être visible par les étudiants.</p>
             <dl class="row" id="recap"></dl>
           </div>
 

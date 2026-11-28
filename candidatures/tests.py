@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from accounts.models import User
+from accounts.models import Domaine, User
 from offres.models import Offre
 
 from .models import Candidature
@@ -28,8 +28,9 @@ class WorkflowTests(TestCase):
             username='etudiant', password='demo1234', role=User.Role.ETUDIANT)
         cls.encadrant = User.objects.create_user(
             username='pro', password='demo1234', role=User.Role.ENCADRANT_PRO)
-        cls.admin = User.objects.create_user(
-            username='admin', password='demo1234', role=User.Role.ADMIN)
+        cls.encadrant_acad = User.objects.create_user(
+            username='acad', password='demo1234', role=User.Role.ENCADRANT_ACAD,
+            domaine=Domaine.GENIE_LOGICIEL)
 
     def test_full_workflow(self):
         # 1. Company supervisor creates and submits an offer.
@@ -40,6 +41,7 @@ class WorkflowTests(TestCase):
             'competences': 'Python, Django',
             'duree': '6 mois',
             'type': Offre.Type.STAGE,
+            'domaine': Domaine.GENIE_LOGICIEL,
             'action': 'soumettre',
         })
         self.assertEqual(response.status_code, 302)
@@ -47,8 +49,8 @@ class WorkflowTests(TestCase):
         self.assertEqual(offre.status, Offre.Status.EN_VALIDATION)
         self.assertEqual(offre.encadrant_pro, self.encadrant)
 
-        # 2. Administration validates the offer.
-        self.client.force_login(self.admin)
+        # 2. An academic supervisor of the offer's field validates it.
+        self.client.force_login(self.encadrant_acad)
         response = self.client.post(reverse('offres:offre_valider', args=[offre.pk]))
         self.assertEqual(response.status_code, 302)
         offre.refresh_from_db()

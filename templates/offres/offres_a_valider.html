@@ -5,8 +5,19 @@
 {% block content %}
 <div class="mb-3">
   <h1 class="h3 mb-1">Offres à valider</h1>
-  <p class="text-muted mb-0">Validez ou refusez les offres soumises par les entreprises.</p>
+  <p class="text-muted mb-0">
+    Validez ou refusez les offres soumises par les entreprises
+    {% if user.domaine %}dans votre domaine : <strong>{{ user.get_domaine_display }}</strong>{% endif %}.
+  </p>
 </div>
+
+{% if not user.domaine %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Votre domaine d'expertise n'est pas renseigné : vous ne voyez que les offres sans domaine.
+    Demandez à l'administration de le renseigner.
+  </div>
+{% endif %}
 
 {% if offres %}
   <div class="card">
@@ -17,6 +28,7 @@
             <th>Offre</th>
             <th>Entreprise / Encadrant</th>
             <th>Type</th>
+            <th>Domaine</th>
             <th>Soumise le</th>
             <th class="text-end">Décision</th>
           </tr>
@@ -33,6 +45,7 @@
               </td>
               <td>{{ offre.encadrant_pro.get_full_name|default:offre.encadrant_pro.username }}</td>
               <td>{{ offre.get_type_display }}</td>
+              <td>{{ offre.get_domaine_display|default:"Non précisé" }}</td>
               <td class="text-muted small">{{ offre.date_creation|date:"d/m/Y" }}</td>
               <td class="text-end">
                 <form method="post" action="{% url 'offres:offre_valider' offre.pk %}" class="d-inline">
@@ -49,7 +62,7 @@
               </td>
             </tr>
             <tr class="collapse" id="refus-{{ offre.pk }}">
-              <td colspan="5" class="bg-light">
+              <td colspan="6" class="bg-light">
                 <form method="post" action="{% url 'offres:offre_refuser' offre.pk %}" class="row g-2 align-items-end">
                   {% csrf_token %}
                   <div class="col-md-9">

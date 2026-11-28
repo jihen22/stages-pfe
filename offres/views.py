@@ -9,6 +9,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from accounts.mixins import RoleRequiredMixin, role_required
 from accounts.models import User
 from candidatures.models import Candidature
+from notifications.services import notify
 
 from .forms import OffreForm
 from .models import Offre
@@ -134,36 +135,57 @@ def soumettre_offre(request, pk):
 
 
 # ---------------------------------------------------------------------------
-# Administration: validate / reject offers
+# Academic supervisor: validate / reject offers of their field
 # ---------------------------------------------------------------------------
+
+def offres_a_valider_pour(user):
+    """Offers waiting for ``user``'s decision: their field, plus offers without a field.
+
+    Offers created before fields existed have an empty ``domaine``; every academic
+    supervisor sees them so they never get stuck in the queue.
+    """
+    domaines = [''] + ([user.domaine] if user.domaine else [])
+    return Offre.objects.filter(status=Offre.Status.EN_VALIDATION, domaine__in=domaines)
+
 
 class OffresAValiderListView(RoleRequiredMixin, ListView):
     template_name = 'offres/offres_a_valider.html'
     context_object_name = 'offres'
-    allowed_roles = (User.Role.ADMIN,)
+    allowed_roles = (User.Role.ENCADRANT_ACAD,)
 
     def get_queryset(self):
-        return Offre.objects.filter(status=Offre.Status.EN_VALIDATION).select_related('encadrant_pro')
+        return offres_a_valider_pour(self.request.user).select_related('encadrant_pro')
 
 
-@role_required(User.Role.ADMIN)
+@role_required(User.Role.ENCADRANT_ACAD)
 @require_POST
 def valider_offre(request, pk):
-    offre = get_object_or_404(Offre, pk=pk)
+    offre = get_object_or_404(offres_a_valider_pour(request.user), pk=pk)
     offre.status = Offre.Status.PUBLIEE
     offre.date_publication = timezone.now()
     offre.motif_refus = ''
     offre.save(update_fields=['status', 'date_publication', 'motif_refus'])
-    messages.success(request, f'L\'offre « {offre.titre} » est publiée.')
+    notify(
+        offre.encadrant_pro,
+        f'Votre offre « {offre.titre} » a été validée et publiée.',
+        reverse('offres:mes_offres'),
+    )
+    messages.success(request, f"L'offre « {offre.titre} » est publiée.")
     return redirect('offres:offres_a_valider')
 
 
-@role_required(User.Role.ADMIN)
+@role_required(User.Role.ENCADRANT_ACAD)
 @require_POST
 def refuser_offre(request, pk):
-    offre = get_object_or_404(Offre, pk=pk)
+    offre = get_object_or_404(offres_a_valider_pour(request.user), pk=pk)
     offre.status = Offre.Status.REFUSEE
     offre.motif_refus = request.POST.get('motif', '').strip()
     offre.save(update_fields=['status', 'motif_refus'])
-    messages.warning(request, f'L\'offre « {offre.titre} » est refusée.')
+    suffix = f' Motif : {offre.motif_refus}' if offre.motif_refus else ''
+    notify(
+        offre.encadrant_pro,
+        f'Votre offre « {offre.titre} » a été refusée.{suffix}',
+        reverse('offres:mes_offres'),
+    )
+    messages.warning(request, f"L'offre « {offre.titre} » est refusée.")
     return redirect('offres:offres_a_valider')

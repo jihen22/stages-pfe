@@ -1,21 +1,21 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Code at commit `621cafc` (style: redesign jury dashboard).
+Audit date: 2026-11-28. Last update: item 4 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 89 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 99 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
-| accounts | 29 |
+| accounts | 30 |
 | pfe | 30 |
 | soutenances | 17 |
 | notifications | 10 |
 | candidatures | 3 |
-| offres | 0 (its workflow is tested in `candidatures/tests.py`) |
+| offres | 9 |
 
 ## Definition of done (CLAUDE.md)
 
@@ -31,19 +31,19 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **16 j** | 168 j | **9.5 %** |
-| Non-AI items | **16 j** | 107 j | **15.0 %** |
+| All items | **18 j** | 168 j | **10.7 %** |
+| Non-AI items | **18 j** | 107 j | **16.8 %** |
 
-DONE items: 3 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) = 16 j.
+DONE items: 3 (3 j) + 4 (2 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 13 (3 j) = 18 j.
 PARTIAL items count for 0 j.
-Items 1 and 5 (8 j together) each only lack one test. Once those tests are written, the non-AI total becomes 24 / 107 j (22.4 %).
+Items 1 and 5 (8 j together) each only lack one test. Once those tests are written, the non-AI total becomes 26 / 107 j (24.3 %).
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 5 | 3, 6, 7, 8, 13 |
-| PARTIAL | 14 | 1, 2, 4, 5, 10, 12, 14, 16, 19, 21, 22, 35, 36, 38 |
+| DONE | 6 | 3, 4, 6, 7, 8, 13 |
+| PARTIAL | 13 | 1, 2, 5, 10, 12, 14, 16, 19, 21, 22, 35, 36, 38 |
 | NOT STARTED | 20 | 9, 11, 15, 17, 18, 20, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -54,7 +54,7 @@ Items 1 and 5 (8 j together) each only lack one test. Once those tests are writt
 | 1 | Sign up / log in by role | 5 | Web | PARTIAL | `accounts/models.py:9-87` (`User.role`, `get_dashboard_url`), `accounts/views.py:29-64` (login, student sign-up, company-supervisor sign-up), `accounts/urls.py`, `templates/accounts/login.html`, `register.html`, tests `accounts/tests.py:121-138` (login → role dashboard) | No test submits the sign-up form: only "page loads" (`accounts/tests.py:116`). The other roles have no self sign-up and are created by `create_demo_users` or the Django admin. That is fine if intended. |
 | 2 | View / edit my profile | 2 | Web | PARTIAL | Student: `accounts/models.py:90-140`, `accounts/views.py:209-221`, tests `accounts/tests.py:249-283`. Company supervisor: `accounts/models.py:150-182`, `accounts/views.py:158-206`, `templates/accounts/profil_encadrant_pro.html` | Academic supervisor, admin and jury can only pick theme/accent (`accounts/views.py:140-148`). They cannot edit their name, email or password. No test for the company-supervisor profile form. |
 | 3 | Company supervisor publishes an offer | 3 | Web | **DONE** | `offres/models.py`, `offres/migrations/0001_initial.py`, `offres/views.py:73-133`, `offres/urls.py`, `templates/offres/offre_form.html`, `mes_offres.html`, test `candidatures/tests.py:34-50` | Publication goes through approval, see item 4. |
-| 4 | Academic supervisor approves offers in their field | 2 | Web | PARTIAL | `offres/views.py:140-169`, `templates/offres/offres_a_valider.html`, `Offre.Status.EN_VALIDATION` (`offres/models.py:9-13`) | **Wrong role**: approval is limited to `User.Role.ADMIN` (`offres/views.py:143, 149, 161`) and the test approves as admin (`candidatures/tests.py:52-57`). No field (`domaine`) on `User`/`Offre`, so offers can't be sent to the supervisor of the right field. |
+| 4 | Academic supervisor approves offers in their field | 2 | Web | **DONE** | Field: `Domaine` choices + `User.domaine` (`accounts/models.py:9-16, 58-64`, migration `accounts/migrations/0007_user_domaine.py`), `Offre.domaine` (`offres/models.py:31-37`, migration `offres/migrations/0002_offre_domaine.py`), required in `offres/forms.py`. Approval: `offres/views.py:141-192` (`offres_a_valider_pour`, queue + approve + refuse limited to `ENCADRANT_ACAD`, own field only, owner notified). Screens: `templates/offres/offres_a_valider.html`, `_sidebar.html`, `dashboards/encadrant_acad.html`. Tests: `offres/tests.py` (9 tests), `accounts/tests.py:25-66`, `candidatures/tests.py:34-60` | Offers created before this change have no field: every academic supervisor sees them. A supervisor's field is set in the Django admin (their own profile page can't edit it yet, see item 2). |
 | 5 | Student searches / views offers | 3 | Web | PARTIAL | `offres/views.py:21-66` (search `q` on title/description/skills, `type` filter, pagination, detail), `templates/offres/offre_list.html`, `offre_detail.html` | No test checks search, the filter or the detail page. Only "list page loads" (`candidatures/tests.py:60`, `accounts/tests.py:84`). |
 | 6 | Apply with CV + cover letter | 4 | Web | **DONE** | `candidatures/models.py` (CV, letter, unique student+offer), `candidatures/migrations/0001_initial.py`, `candidatures/views.py:32-69`, `templates/candidatures/candidature_form.html`, tests `candidatures/tests.py:58-100` | — |
 | 7 | Track my application + notifications | 4 | Web | **DONE** | `candidatures/views.py:20-29, 98-125`, `templates/candidatures/mes_candidatures.html`, `notifications/models.py`, `notifications/services.py`, `notifications/views.py`, `notifications/context_processors.py`, tests `notifications/tests.py:38-130` | In-app notifications only, no email (not required). |
@@ -86,27 +86,39 @@ Items 1 and 5 (8 j together) each only lack one test. Once those tests are writt
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 89 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No `offres/tests.py`. No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 89 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
 
 ## Next 5 non-AI items to build (dependency order)
 
-1. **Item 4: the academic supervisor approves offers in their field** (2 j).
-   - Add a `domaine` field (new migration) and move approval from `ADMIN` to `ENCADRANT_ACAD`.
-   - It fixes a rule CLAUDE.md says not to change, and items 10 and 16 need the field.
-2. **Item 14: PFE state machine** (6 j).
+1. **Item 14: PFE state machine** (6 j).
    - Define the states, the allowed transitions and the guards on `ProjetPFE`.
    - Deliverables (12), the company supervisor's follow-up (15), defense planning (19) and documents (17) all depend on the project status.
-3. **Item 16: workload of the academic supervisor** (2 j).
+2. **Item 16: workload of the academic supervisor** (2 j).
    - Count students per supervisor, by status.
    - This count is the "charge" input for the suggestion in item 10.
-4. **Item 10: assign a PFE by field and workload, with an empty AI hook** (6 j).
-   - Needs the field from item 4 and the workload from item 16.
-5. **Item 12: version history for deliverables** (4 j).
+3. **Item 10: assign a PFE by field and workload, with an empty AI hook** (6 j).
+   - Uses `User.domaine` from item 4 and the workload from item 16.
+4. **Item 12: version history for deliverables** (4 j).
    - Needed before the jury can read the reports (21). AI similarity (30) needs it later.
+5. **Item 19: plan defenses with rooms and time slots** (6 j).
+   - Needs project statuses (14). Conflict detection (20) needs rooms and slots.
 
-After these: 19 → 20 (rooms/slots, then conflicts) → 17 → 18 (documents, agreement) → 21 / 22 (notices, reports for the jury) → 11, 15, 23.
+After these: 20 (conflicts) → 17 → 18 (documents, agreement) → 21 / 22 (notices, reports for the jury) → 11, 15, 23.
 
 Quick wins to do along the way: one sign-up test (item 1) and one search test (item 5). They move 8 j to DONE.
+
+## Change log
+
+### Item 4: academic supervisor approves offers (done 2026-11-28)
+
+Files changed:
+- Models and migrations: `accounts/models.py`, `accounts/migrations/0007_user_domaine.py`, `offres/models.py`, `offres/migrations/0002_offre_domaine.py`
+- Logic: `offres/forms.py`, `offres/views.py`, `offres/urls.py`, `accounts/views.py`, `accounts/admin.py`
+- Templates: `templates/offres/offres_a_valider.html`, `offre_form.html`, `offre_detail.html`, `offre_list.html`, `templates/partials/_sidebar.html`, `templates/accounts/dashboards/admin.html`, `encadrant_acad.html`
+- Demo data: `accounts/management/commands/create_demo_users.py`, `seed_demo.py`, `seed_showcase.py` (`encadrant_acad` = Data science et IA, `encadrant_acad2` = Génie logiciel)
+- Tests: `offres/tests.py` (new), `accounts/tests.py`, `candidatures/tests.py`
+
+What's left (outside item 4): academic supervisors can't edit their own field yet (item 2).

@@ -59,7 +59,17 @@
           <i class="bi bi-arrow-right action-arrow"></i>
         </a>
       </div>
-      <div class="col-12">
+      <div class="col-md-6">
+        <a class="card lift action-card reveal" data-delay="2" href="{% url 'offres:offres_a_valider' %}">
+          <span class="feature-icon"><i class="bi bi-patch-check"></i></span>
+          <div class="flex-grow-1">
+            <h3>Offres à valider <span class="badge text-bg-warning tabular-nums">{{ offres_a_valider }}</span></h3>
+            <p>Offres d'entreprise de votre domaine en attente de votre décision.</p>
+          </div>
+          <i class="bi bi-arrow-right action-arrow"></i>
+        </a>
+      </div>
+      <div class="col-md-6">
         <a class="card lift action-card reveal" data-delay="2" href="{% url 'pfe:creer_projet_encadrant' %}">
           <span class="feature-icon"><i class="bi bi-plus-circle"></i></span>
           <div class="flex-grow-1">
