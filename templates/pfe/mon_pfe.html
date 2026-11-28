@@ -125,10 +125,13 @@
             </tr>
           </thead>
           <tbody>
-            {% for livrable in livrables %}
+            {% for livrable, anciennes in livrables %}
               <tr>
                 <td>
-                  <div class="fw-semibold">{{ livrable.titre }}</div>
+                  <div class="fw-semibold">
+                    {{ livrable.titre }}
+                    <span class="badge text-bg-light border ms-1">v{{ livrable.version }}</span>
+                  </div>
                   {% if livrable.commentaire %}
                     <div class="text-muted small text-truncate" style="max-width: 300px;" title="{{ livrable.commentaire }}">
                       {{ livrable.commentaire }}
@@ -149,13 +152,49 @@
                   {% endif %}
                 </td>
                 <td class="text-end">
-                  {% if livrable.fichier %}
-                    <a href="{{ livrable.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                      <i class="bi bi-file-earmark-arrow-down me-1"></i> Télécharger
-                    </a>
-                  {% endif %}
+                  <div class="d-flex flex-wrap justify-content-end gap-1">
+                    {% if livrable.fichier %}
+                      <a href="{{ livrable.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i> Télécharger
+                      </a>
+                    {% endif %}
+                    {% if depot_ouvert %}
+                      <a href="{% url 'pfe:nouvelle_version' livrable.pk %}" class="btn btn-sm btn-outline-primary text-nowrap">
+                        <i class="bi bi-arrow-repeat me-1"></i> Nouvelle version
+                      </a>
+                    {% endif %}
+                    {% if anciennes %}
+                      <button type="button" class="btn btn-sm btn-link text-nowrap" data-bs-toggle="collapse"
+                              data-bs-target="#versions-{{ livrable.pk }}" aria-expanded="false" aria-controls="versions-{{ livrable.pk }}">
+                        <i class="bi bi-clock-history me-1"></i> {{ anciennes|length }} version{{ anciennes|length|pluralize }} précédente{{ anciennes|length|pluralize }}
+                      </button>
+                    {% endif %}
+                  </div>
                 </td>
               </tr>
+              {% if anciennes %}
+                <tr class="collapse" id="versions-{{ livrable.pk }}">
+                  <td colspan="5" class="bg-body-tertiary">
+                    <ul class="list-unstyled small mb-0">
+                      {% for ancienne in anciennes %}
+                        <li class="d-flex flex-wrap align-items-center gap-2 py-1 {% if not forloop.last %}border-bottom{% endif %}">
+                          <span class="badge text-bg-light border">v{{ ancienne.version }}</span>
+                          <span class="text-muted">{{ ancienne.date_depot|date:"d/m/Y H:i" }}</span>
+                          {% include "partials/_status_badge.html" with status=ancienne.status label=ancienne.get_status_display %}
+                          {% if ancienne.commentaire_encadrant %}
+                            <span class="text-danger"><i class="bi bi-chat-left-dots me-1"></i>{{ ancienne.commentaire_encadrant }}</span>
+                          {% endif %}
+                          {% if ancienne.fichier %}
+                            <a href="{{ ancienne.fichier.url }}" target="_blank" class="ms-auto">
+                              <i class="bi bi-download me-1"></i>Fichier v{{ ancienne.version }}
+                            </a>
+                          {% endif %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </td>
+                </tr>
+              {% endif %}
             {% endfor %}
           </tbody>
         </table>

@@ -1,6 +1,6 @@
 {% extends "base_app.html" %}
 
-{% block title %}Déposer un livrable{% endblock %}
+{% block title %}{% if precedente %}Nouvelle version{% else %}Déposer un livrable{% endif %}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -27,10 +27,27 @@
 
     <div class="card">
       <div class="card-body p-4">
-        <h2 class="h5 mb-3"><i class="bi bi-cloud-arrow-up me-1"></i> Nouveau livrable</h2>
-        <p class="text-muted small mb-4">
-          Déposez votre rapport d'avancement, rapport final ou tout document demandé par votre encadrant.
-        </p>
+        {% if precedente %}
+          <h2 class="h5 mb-3">
+            <i class="bi bi-arrow-repeat me-1"></i> {{ precedente.titre }} — version {{ precedente.version|add:1 }}
+          </h2>
+          <div class="alert alert-light border small">
+            Version actuelle : <strong>v{{ precedente.version }}</strong> du {{ precedente.date_depot|date:"d/m/Y" }},
+            {% include "partials/_status_badge.html" with status=precedente.status label=precedente.get_status_display %}
+            {% if precedente.commentaire_encadrant %}
+              <div class="mt-2 text-danger"><i class="bi bi-chat-left-dots me-1"></i>{{ precedente.commentaire_encadrant }}</div>
+            {% endif %}
+            {% if precedente.status == 'DEPOSE' %}
+              <div class="mt-2 text-muted">Elle n'a pas encore été relue : la nouvelle version la remplacera dans la liste de votre encadrant.</div>
+            {% endif %}
+          </div>
+        {% else %}
+          <h2 class="h5 mb-3"><i class="bi bi-cloud-arrow-up me-1"></i> Nouveau livrable</h2>
+          <p class="text-muted small mb-4">
+            Déposez votre rapport d'avancement, rapport final ou tout document demandé par votre encadrant.
+            Pour corriger un livrable existant, utilisez plutôt « Nouvelle version » depuis Mon PFE.
+          </p>
+        {% endif %}
 
         <form method="post" enctype="multipart/form-data" novalidate>
           {% csrf_token %}
@@ -47,7 +64,7 @@
 
           <div class="d-flex align-items-center gap-2 mt-4">
             <button type="submit" class="btn btn-primary">
-              <i class="bi bi-cloud-arrow-up me-1"></i> Déposer le livrable
+              <i class="bi bi-cloud-arrow-up me-1"></i> {% if precedente %}Déposer la version {{ precedente.version|add:1 }}{% else %}Déposer le livrable{% endif %}
             </button>
             <a href="{% url 'pfe:mon_pfe' %}" class="btn btn-outline-secondary">
               Annuler

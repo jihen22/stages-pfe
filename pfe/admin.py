@@ -6,8 +6,8 @@ from .models import HistoriqueStatut, Livrable, ProjetPFE
 class LivrableInline(admin.TabularInline):
     model = Livrable
     extra = 0
-    fields = ('titre', 'fichier', 'status', 'commentaire_encadrant', 'date_depot')
-    readonly_fields = ('date_depot',)
+    fields = ('titre', 'version', 'fichier', 'status', 'commentaire_encadrant', 'date_depot')
+    readonly_fields = ('version', 'date_depot')
 
 
 class HistoriqueStatutInline(admin.TabularInline):
@@ -42,7 +42,7 @@ class ProjetPFEAdmin(admin.ModelAdmin):
 
 @admin.register(Livrable)
 class LivrableAdmin(admin.ModelAdmin):
-    list_display = ('titre', 'projet', 'status', 'date_depot')
+    list_display = ('titre', 'version', 'projet', 'status', 'date_depot')
     list_filter = ('status', 'date_depot')
     search_fields = (
         'titre',

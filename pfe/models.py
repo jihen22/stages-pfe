@@ -121,13 +121,24 @@ class HistoriqueStatut(models.Model):
         return f'{self.projet} : {self.ancien or "—"} → {self.nouveau}'
 
 
+class LivrableQuerySet(models.QuerySet):
+    def dernieres_versions(self):
+        """Only the latest version of each deliverable (the ones with no newer version)."""
+        return self.filter(version_suivante__isnull=True)
+
+
 class Livrable(models.Model):
-    """Livrable or document submitted by a student for their PFE."""
+    """One version of a deliverable submitted by a student for their PFE.
+
+    Uploading a new version creates a new ``Livrable`` linked to the previous one
+    through ``version_precedente`` (item 12), so the whole history is kept.
+    """
 
     class Status(models.TextChoices):
         DEPOSE = 'DEPOSE', 'Déposé'
         VALIDE = 'VALIDE', 'Validé'
         A_CORRIGER = 'A_CORRIGER', 'À corriger'
+        REMPLACE = 'REMPLACE', 'Remplacé avant relecture'
 
     projet = models.ForeignKey(
         ProjetPFE,
@@ -146,6 +157,17 @@ class Livrable(models.Model):
     )
     commentaire_encadrant = models.TextField("Commentaire de l'encadrant", blank=True)
     date_depot = models.DateTimeField('Date de dépôt', auto_now_add=True)
+    version = models.PositiveSmallIntegerField('Version', default=1)
+    version_precedente = models.OneToOneField(
+        'self',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='version_suivante',
+        verbose_name='Version précédente',
+    )
+
+    objects = LivrableQuerySet.as_manager()
 
     class Meta:
         ordering = ['-date_depot']
@@ -153,4 +175,36 @@ class Livrable(models.Model):
         verbose_name_plural = 'livrables'
 
     def __str__(self):
-        return self.titre
+        return f'{self.titre} (v{self.version})'
+
+    @property
+    def est_derniere_version(self):
+        try:
+            self.version_suivante
+        except Livrable.DoesNotExist:
+            return True
+        return False
+
+
+def regrouper_versions(livrables):
+    """Group versions by deliverable without extra queries.
+
+    Returns a list of ``(latest_version, [older versions, newest first])``,
+    newest deliverables first.
+    """
+    livrables = list(livrables)
+    par_id = {lv.pk: lv for lv in livrables}
+    ont_suivante = {lv.version_precedente_id for lv in livrables if lv.version_precedente_id}
+    groupes = []
+    for lv in livrables:
+        if lv.pk in ont_suivante:
+            continue
+        anciennes = []
+        precedente = par_id.get(lv.version_precedente_id)
+        while precedente is not None:
+            anciennes.append(precedente)
+            precedente = par_id.get(precedente.version_precedente_id)
+        groupes.append((lv, anciennes))
+    # Newest first; the id breaks ties between uploads in the same instant.
+    groupes.sort(key=lambda g: (g[0].date_depot, g[0].pk), reverse=True)
+    return groupes

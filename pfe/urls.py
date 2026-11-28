@@ -7,6 +7,7 @@ app_name = 'pfe'
 urlpatterns = [
     path('mon-pfe/', views.mon_pfe, name='mon_pfe'),
     path('<int:projet_pk>/deposer/', views.deposer_livrable, name='deposer_livrable'),
+    path('livrables/<int:pk>/nouvelle-version/', views.nouvelle_version, name='nouvelle_version'),
     path('mes-etudiants/', views.mes_etudiants, name='mes_etudiants'),
     path('charge/', views.ma_charge, name='ma_charge'),
     path('livrables/', views.livrables_a_valider, name='livrables_a_valider'),

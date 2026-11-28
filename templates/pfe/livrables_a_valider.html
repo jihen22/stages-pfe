@@ -29,7 +29,23 @@
           {% for livrable in livrables %}
             <tr>
               <td>
-                <div class="fw-semibold">{{ livrable.titre }}</div>
+                <div class="fw-semibold">
+                  {{ livrable.titre }}
+                  <span class="badge text-bg-light border ms-1">v{{ livrable.version }}</span>
+                </div>
+                {% with prec=livrable.version_precedente %}
+                  {% if prec %}
+                    <div class="small text-muted">
+                      Version précédente v{{ prec.version }} : {{ prec.get_status_display|lower }}
+                      {% if prec.fichier %}· <a href="{{ prec.fichier.url }}" target="_blank">fichier v{{ prec.version }}</a>{% endif %}
+                    </div>
+                    {% if prec.commentaire_encadrant %}
+                      <div class="small text-danger text-truncate" style="max-width: 250px;" title="{{ prec.commentaire_encadrant }}">
+                        <i class="bi bi-chat-left-dots me-1"></i>Votre remarque : {{ prec.commentaire_encadrant }}
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                {% endwith %}
                 {% if livrable.commentaire %}
                   <div class="text-muted small text-truncate" style="max-width: 250px;" title="{{ livrable.commentaire }}">
                     {{ livrable.commentaire }}

@@ -60,7 +60,10 @@ def charge_encadrant(encadrant):
             livrables_en_attente=Count(
                 'livrables', filter=Q(livrables__status=Livrable.Status.DEPOSE), distinct=True),
             livrables_a_corriger=Count(
-                'livrables', filter=Q(livrables__status=Livrable.Status.A_CORRIGER), distinct=True),
+                'livrables',
+                filter=Q(livrables__status=Livrable.Status.A_CORRIGER,
+                         livrables__version_suivante__isnull=True),
+                distinct=True),
             dernier_depot=Max('livrables__date_depot'),
         )
         .order_by('-livrables_en_attente', 'etudiant__last_name', 'etudiant__username')
@@ -81,7 +84,7 @@ def charge_encadrant(encadrant):
         'soutenus': compte.get(S.SOUTENU, 0),
         'livrables_a_valider': Livrable.objects.filter(
             projet__encadrant_acad=encadrant, status=Livrable.Status.DEPOSE).count(),
-        'livrables_a_corriger': Livrable.objects.filter(
+        'livrables_a_corriger': Livrable.objects.dernieres_versions().filter(
             projet__encadrant_acad=encadrant, status=Livrable.Status.A_CORRIGER).count(),
         'soutenances_a_venir': (
             Soutenance.objects.filter(projet__encadrant_acad=encadrant, date__gte=timezone.now())

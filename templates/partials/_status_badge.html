@@ -15,6 +15,8 @@ Usage:
   <span class="badge rounded-pill text-bg-info">{{ label|default:status }}</span>
 {% elif status == 'EN_COURS' %}
   <span class="badge rounded-pill text-bg-primary">{{ label|default:status }}</span>
+{% elif status == 'REMPLACE' %}
+  <span class="badge rounded-pill text-bg-light border">{{ label|default:status }}</span>
 {% else %}
   <span class="badge rounded-pill text-bg-secondary">{{ label|default:status }}</span>
 {% endif %}

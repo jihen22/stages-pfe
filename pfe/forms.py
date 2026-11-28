@@ -35,6 +35,18 @@ class LivrableForm(BootstrapFormMixin, forms.ModelForm):
         }
 
 
+class NouvelleVersionForm(BootstrapFormMixin, forms.ModelForm):
+    """New version of an existing deliverable: same title, new file and note."""
+
+    class Meta:
+        model = Livrable
+        fields = ('fichier', 'commentaire')
+        labels = {'commentaire': 'Ce qui a changé'}
+        widgets = {
+            'commentaire': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Corrections apportées, nouvelles sections…'}),
+        }
+
+
 class ProjetEncadrantForm(BootstrapFormMixin, forms.ModelForm):
     """Form for an academic supervisor to create a PFE project for a student."""
 

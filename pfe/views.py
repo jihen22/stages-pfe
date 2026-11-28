@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -10,14 +11,24 @@ from notifications.services import notify
 
 from .charge import charge_encadrant
 from .suggestion import encadrants_avec_charge, raison_refus, suggerer_encadrants
-from .forms import LivrableForm, ProjetEncadrantForm, ProjetPFEForm
-from .models import Livrable, ProjetPFE
+from .forms import LivrableForm, NouvelleVersionForm, ProjetEncadrantForm, ProjetPFEForm
+from .models import Livrable, ProjetPFE, regrouper_versions
 from .workflow import ETATS_DEPOT_OUVERT, TransitionInterdite, appliquer, peut
 
 
 # ---------------------------------------------------------------------------
 # Deliverable review helpers (shared by the list and action views)
 # ---------------------------------------------------------------------------
+
+def _livrable_a_relire(request, pk):
+    """A version the supervisor may review: theirs, latest, and still waiting (else 404)."""
+    return get_object_or_404(
+        Livrable.objects.dernieres_versions(),
+        pk=pk,
+        projet__encadrant_acad=request.user,
+        status=Livrable.Status.DEPOSE,
+    )
+
 
 def _valider_livrable(request, livrable):
     """Mark a deliverable as validated, save the optional comment and notify the student."""
@@ -63,7 +74,7 @@ def _demander_corrections(request, livrable):
 def _contexte_mon_pfe(projet):
     return {
         'projet': projet,
-        'livrables': projet.livrables.all(),
+        'livrables': regrouper_versions(projet.livrables.all()),
         'historique': projet.historique.select_related('auteur'),
         'depot_ouvert': projet.status in ETATS_DEPOT_OUVERT,
     }
@@ -147,9 +158,69 @@ def deposer_livrable(request, projet_pk):
     return render(request, 'pfe/deposer_livrable.html', {'projet': projet, 'form': form})
 
 
+@role_required(User.Role.ETUDIANT)
+def nouvelle_version(request, pk):
+    """Upload a new version of one of the student's deliverables (item 12)."""
+    precedente = get_object_or_404(
+        Livrable.objects.dernieres_versions().select_related('projet', 'projet__encadrant_acad'),
+        pk=pk,
+        projet__etudiant=request.user,
+    )
+    projet = precedente.projet
+    if projet.status not in ETATS_DEPOT_OUVERT:
+        messages.error(
+            request,
+            f"Le dépôt de livrables est fermé : le projet est « {projet.get_status_display()} ».",
+        )
+        return redirect('pfe:mon_pfe')
+
+    if request.method == 'POST':
+        form = NouvelleVersionForm(request.POST, request.FILES)
+        if form.is_valid():
+            livrable = form.save(commit=False)
+            livrable.projet = projet
+            livrable.titre = precedente.titre
+            livrable.version = precedente.version + 1
+            livrable.version_precedente = precedente
+            livrable.status = Livrable.Status.DEPOSE
+            try:
+                with transaction.atomic():
+                    livrable.save()
+                    if precedente.status == Livrable.Status.DEPOSE:
+                        # Not reviewed yet: the supervisor only reviews the newest file.
+                        Livrable.objects.filter(pk=precedente.pk).update(status=Livrable.Status.REMPLACE)
+            except IntegrityError:
+                # Another upload created this version first (one successor per version).
+                messages.error(request, "Une version plus récente vient d'être déposée.")
+                return redirect('pfe:mon_pfe')
+
+            if projet.encadrant_acad:
+                student_name = request.user.get_full_name() or request.user.username
+                notify(
+                    projet.encadrant_acad,
+                    f"{student_name} a déposé la version {livrable.version} de « {livrable.titre} ».",
+                    reverse('pfe:livrables_a_valider'),
+                )
+            messages.success(request, f"Version {livrable.version} de « {livrable.titre} » déposée.")
+            return redirect('pfe:mon_pfe')
+    else:
+        form = NouvelleVersionForm()
+
+    return render(request, 'pfe/deposer_livrable.html', {
+        'projet': projet,
+        'form': form,
+        'precedente': precedente,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Academic supervisor views
 # ---------------------------------------------------------------------------
+
+def _a_une_suivante(livrable, projet):
+    """True when another version of ``projet`` points to ``livrable`` (uses the prefetch)."""
+    return any(lv.version_precedente_id == livrable.pk for lv in projet.livrables.all())
+
 
 @role_required(User.Role.ENCADRANT_ACAD)
 def mes_etudiants(request):
@@ -161,6 +232,7 @@ def mes_etudiants(request):
         .order_by('-date_creation')
     )
     for projet in projets:
+        projet.nb_livrables = sum(1 for lv in projet.livrables.all() if not _a_une_suivante(lv, projet))
         projet.peut_terminer = peut(projet, 'terminer')
         projet.peut_rouvrir = peut(projet, 'rouvrir')
     return render(request, 'pfe/mes_etudiants.html', {'projets': projets})
@@ -179,7 +251,7 @@ def livrables_a_valider(request):
         action = request.POST.get('action')
         livrable_id = request.POST.get('livrable_id')
         if livrable_id and action in ('valider', 'corriger'):
-            livrable = get_object_or_404(Livrable, pk=livrable_id, projet__encadrant_acad=request.user)
+            livrable = _livrable_a_relire(request, livrable_id)
             if action == 'valider':
                 _valider_livrable(request, livrable)
             else:
@@ -188,7 +260,7 @@ def livrables_a_valider(request):
 
     livrables = (
         Livrable.objects.filter(projet__encadrant_acad=request.user, status=Livrable.Status.DEPOSE)
-        .select_related('projet', 'projet__etudiant', 'projet__offre')
+        .select_related('projet', 'projet__etudiant', 'projet__offre', 'version_precedente')
         .order_by('-date_depot')
     )
     return render(request, 'pfe/livrables_a_valider.html', {'livrables': livrables})
@@ -198,7 +270,7 @@ def livrables_a_valider(request):
 @require_POST
 def valider_livrable(request, pk):
     """Validate a student's deliverable."""
-    livrable = get_object_or_404(Livrable, pk=pk, projet__encadrant_acad=request.user)
+    livrable = _livrable_a_relire(request, pk)
     _valider_livrable(request, livrable)
     return redirect('pfe:livrables_a_valider')
 
@@ -207,7 +279,7 @@ def valider_livrable(request, pk):
 @require_POST
 def corriger_livrable(request, pk):
     """Request corrections on a student's deliverable."""
-    livrable = get_object_or_404(Livrable, pk=pk, projet__encadrant_acad=request.user)
+    livrable = _livrable_a_relire(request, pk)
     _demander_corrections(request, livrable)
     return redirect('pfe:livrables_a_valider')
 

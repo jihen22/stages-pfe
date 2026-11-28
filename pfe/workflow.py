@@ -44,7 +44,7 @@ def _garde_affecter(projet, encadrant_acad=None, **_):
 
 
 def _garde_terminer(projet, **_):
-    livrables = projet.livrables.all()
+    livrables = projet.livrables.dernieres_versions()
     if not livrables.filter(status=Livrable.Status.VALIDE).exists():
         return "Au moins un livrable doit être validé avant de terminer le projet."
     if livrables.filter(status=Livrable.Status.DEPOSE).exists():

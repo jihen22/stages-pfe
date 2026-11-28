@@ -110,7 +110,8 @@ class MonPfeViewTests(PfeBaseTestCase):
         response = self.client.get(reverse('pfe:mon_pfe'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['projet'], self.projet)
-        self.assertIn(self.livrable, response.context['livrables'])
+        # Deliverables are grouped by version: (latest version, older versions).
+        self.assertIn((self.livrable, []), response.context['livrables'])
 
     def test_invalid_submission_rerenders_the_form_without_crashing(self):
         """Regression: an invalid POST used to fall through to ``projet.livrables``."""
