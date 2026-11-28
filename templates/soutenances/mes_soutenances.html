@@ -37,7 +37,7 @@
                 </div>
                 <div class="text-muted small">
                   <i class="bi bi-clock me-1"></i>
-                  {{ item.soutenance.date|date:"H:i" }}
+                  {{ item.soutenance.creneau.debut|date:"H:i" }}–{{ item.soutenance.creneau.fin|date:"H:i" }}
                 </div>
               </td>
               <td>

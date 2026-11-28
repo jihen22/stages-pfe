@@ -11,4 +11,7 @@ urlpatterns = [
     path('notes/<int:pk>/', views.saisir_notes, name='saisir_note'),
     path('planning/', views.planning, name='planning'),
     path('planifier/', views.planifier_soutenance, name='planifier'),
+    path('salles-creneaux/', views.ressources, name='ressources'),
+    path('salles/<int:pk>/basculer/', views.basculer_salle, name='basculer_salle'),
+    path('creneaux/<int:pk>/supprimer/', views.supprimer_creneau, name='supprimer_creneau'),
 ]

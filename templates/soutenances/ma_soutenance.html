@@ -31,7 +31,7 @@
             <div class="col-sm-6">
               <div class="p-3 border rounded bg-body-tertiary">
                 <div class="text-muted small mb-1"><i class="bi bi-calendar-event me-1"></i> Date et heure</div>
-                <div class="fw-semibold">{{ soutenance.date|date:"l d F Y à H:i" }}</div>
+                <div class="fw-semibold">{{ soutenance.date|date:"l d F Y" }}, {{ soutenance.creneau.debut|date:"H:i" }}–{{ soutenance.creneau.fin|date:"H:i" }}</div>
               </div>
             </div>
             <div class="col-sm-6">

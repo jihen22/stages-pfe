@@ -1,5 +1,8 @@
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import ProtectedError
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -8,13 +11,15 @@ from accounts.models import User
 from notifications.services import notify
 from pfe.workflow import ETATS_NOTATION_OUVERTE, TransitionInterdite, appliquer, peut
 
-from .forms import NoteSoutenanceForm, SoutenanceForm
-from .models import NoteSoutenance, Soutenance
+from .forms import CreneauForm, JourneeCreneauxForm, NoteSoutenanceForm, SalleForm, SoutenanceForm
+from .models import Creneau, NoteSoutenance, Salle, Soutenance
 
 
 def _notify_soutenance(soutenance):
     """Notify the student and every jury member about a newly scheduled defense."""
-    date_str = soutenance.date.strftime('%d/%m/%Y à %H:%M')
+    debut = timezone.localtime(soutenance.creneau.debut)
+    fin = timezone.localtime(soutenance.creneau.fin)
+    date_str = f"{debut:%d/%m/%Y} de {debut:%H:%M} à {fin:%H:%M}"
 
     etudiant = getattr(soutenance.projet, 'etudiant', None)
     if etudiant:
@@ -53,7 +58,7 @@ def ma_soutenance(request):
     """Display the authenticated student's soutenance info and grade average."""
     soutenance = (
         Soutenance.objects.filter(projet__etudiant=request.user)
-        .select_related('projet', 'projet__etudiant', 'projet__encadrant_acad')
+        .select_related('projet', 'projet__etudiant', 'projet__encadrant_acad', 'creneau', 'salle')
         .prefetch_related('jury', 'notes')
         .first()
     )
@@ -69,9 +74,9 @@ def mes_soutenances(request):
     """List all soutenances where the user is an assigned jury member."""
     soutenances = (
         Soutenance.objects.filter(jury=request.user)
-        .select_related('projet', 'projet__etudiant')
+        .select_related('projet', 'projet__etudiant', 'creneau', 'salle')
         .prefetch_related('jury', 'notes')
-        .order_by('date')
+        .order_by('creneau__debut')
     )
     soutenances_data = []
     for s in soutenances:
@@ -98,9 +103,9 @@ def saisir_notes_list(request):
     """List soutenances assigned to the jury member with their grading status."""
     soutenances = (
         Soutenance.objects.filter(jury=request.user)
-        .select_related('projet', 'projet__etudiant')
+        .select_related('projet', 'projet__etudiant', 'creneau', 'salle')
         .prefetch_related('notes')
-        .order_by('date')
+        .order_by('creneau__debut')
     )
     soutenances_info = []
     for s in soutenances:
@@ -127,7 +132,7 @@ def saisir_notes_list(request):
 def saisir_notes(request, pk):
     """Enter or update the grade and remark for a given soutenance."""
     soutenance = get_object_or_404(
-        Soutenance.objects.select_related('projet', 'projet__etudiant'),
+        Soutenance.objects.select_related('projet', 'projet__etudiant', 'creneau', 'salle'),
         pk=pk,
     )
     if not soutenance.jury.filter(pk=request.user.pk).exists():
@@ -178,17 +183,52 @@ def saisir_notes(request, pk):
 def planning(request):
     """Admin view: list all scheduled soutenances with an action to plan new ones."""
     soutenances = (
-        Soutenance.objects.select_related('projet', 'projet__etudiant')
+        Soutenance.objects.select_related('projet', 'projet__etudiant', 'projet__encadrant_acad', 'creneau', 'salle')
         .prefetch_related('jury', 'notes')
-        .order_by('date')
+        .order_by('creneau__debut')
     )
     return render(
         request,
         'soutenances/planning.html',
         {
             'soutenances': soutenances,
+            'journees': _grille_par_jour(soutenances),
+            'nb_creneaux_libres': Creneau.objects.filter(debut__gte=timezone.now()).count(),
         },
     )
+
+
+def _grille_par_jour(soutenances):
+    """Upcoming sessions as one grid per day: rows are slots, columns are rooms.
+
+    Each cell is the list of defenses in that slot and room (more than one would be
+    a double booking: item 20 detects and resolves those).
+    """
+    maintenant = timezone.now()
+    creneaux = list(Creneau.objects.filter(fin__gte=maintenant))
+    salles_actives = list(Salle.objects.filter(active=True))
+    par_cellule = {}
+    for s in soutenances:
+        if s.creneau.fin >= maintenant:
+            par_cellule.setdefault((s.creneau_id, s.salle_id), []).append(s)
+
+    journees = {}
+    for creneau in creneaux:
+        jour = timezone.localtime(creneau.debut).date()
+        journees.setdefault(jour, []).append(creneau)
+
+    resultat = []
+    for jour, creneaux_du_jour in journees.items():
+        ids = {c.pk for c in creneaux_du_jour}
+        salles_utilisees = {s.salle for s in soutenances if s.creneau_id in ids}
+        salles = sorted(set(salles_actives) | salles_utilisees, key=lambda salle: salle.nom)
+        lignes = [
+            {'creneau': c, 'cellules': [par_cellule.get((c.pk, salle.pk), []) for salle in salles]}
+            for c in creneaux_du_jour
+        ]
+        nb = sum(len(cell) for ligne in lignes for cell in ligne['cellules'])
+        resultat.append({'jour': jour, 'salles': salles, 'lignes': lignes, 'nb_soutenances': nb})
+    return resultat
 
 
 @role_required(User.Role.ADMIN)
@@ -223,5 +263,85 @@ def planifier_soutenance(request):
         'soutenances/planifier.html',
         {
             'form': form,
+            'aucun_creneau': not form.fields['creneau'].queryset.exists(),
+            'aucune_salle': not form.fields['salle'].queryset.exists(),
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Administration: rooms and time slots (item 19)
+# ---------------------------------------------------------------------------
+
+@role_required(User.Role.ADMIN)
+def ressources(request):
+    """Manage rooms and slots: add a room, add one slot or generate a day of slots."""
+    salle_form = SalleForm(prefix='salle')
+    creneau_form = CreneauForm(prefix='creneau')
+    journee_form = JourneeCreneauxForm(prefix='journee')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'salle':
+            salle_form = SalleForm(request.POST, prefix='salle')
+            if salle_form.is_valid():
+                salle = salle_form.save()
+                messages.success(request, f"Salle « {salle.nom} » ajoutée.")
+                return redirect('soutenances:ressources')
+        elif action == 'creneau':
+            creneau_form = CreneauForm(request.POST, prefix='creneau')
+            if creneau_form.is_valid():
+                creneau = creneau_form.save()
+                messages.success(request, f"Créneau {creneau} ajouté.")
+                return redirect('soutenances:ressources')
+        elif action == 'journee':
+            journee_form = JourneeCreneauxForm(request.POST, prefix='journee')
+            if journee_form.is_valid():
+                crees = 0
+                for debut, fin in journee_form.creneaux():
+                    _, cree = Creneau.objects.get_or_create(debut=debut, fin=fin)
+                    crees += cree
+                if crees:
+                    messages.success(request, f"{crees} créneau{'x' if crees > 1 else ''} créé{'s' if crees > 1 else ''}.")
+                else:
+                    messages.info(request, "Aucun nouveau créneau : ils existaient déjà ou la plage est trop courte.")
+                return redirect('soutenances:ressources')
+
+    a_venir = Creneau.objects.filter(fin__gte=timezone.now()).prefetch_related('soutenances')
+    journees = {}
+    for creneau in a_venir:
+        journees.setdefault(timezone.localtime(creneau.debut).date(), []).append(creneau)
+
+    return render(request, 'soutenances/ressources.html', {
+        'salles': Salle.objects.all(),
+        'journees': sorted(journees.items()),
+        'salle_form': salle_form,
+        'creneau_form': creneau_form,
+        'journee_form': journee_form,
+    })
+
+
+@role_required(User.Role.ADMIN)
+@require_POST
+def basculer_salle(request, pk):
+    """Make a room unavailable for new defenses, or available again."""
+    salle = get_object_or_404(Salle, pk=pk)
+    salle.active = not salle.active
+    salle.save(update_fields=['active'])
+    etat = 'de nouveau disponible' if salle.active else 'désactivée'
+    messages.success(request, f"Salle « {salle.nom} » {etat}.")
+    return redirect('soutenances:ressources')
+
+
+@role_required(User.Role.ADMIN)
+@require_POST
+def supprimer_creneau(request, pk):
+    """Delete a slot that no defense uses."""
+    creneau = get_object_or_404(Creneau, pk=pk)
+    try:
+        creneau.delete()
+    except ProtectedError:
+        messages.error(request, f"Le créneau {creneau} est utilisé par une soutenance : il ne peut pas être supprimé.")
+    else:
+        messages.success(request, f"Créneau {creneau} supprimé.")
+    return redirect('soutenances:ressources')

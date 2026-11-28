@@ -12,7 +12,7 @@ Deliverable files come from ``rapportpfe.pdf`` at the project root when it is
 present (personal, never committed), otherwise from ``fixtures/demo_report.pdf``
 (the neutral placeholder committed with the repository).
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.conf import settings
@@ -23,7 +23,7 @@ from django.utils import timezone
 from accounts.models import Domaine, ProfilEtudiant, User
 from offres.models import Offre
 from pfe.models import Livrable, ProjetPFE
-from soutenances.models import NoteSoutenance, Soutenance
+from soutenances.models import Creneau, NoteSoutenance, Salle, Soutenance
 
 PASSWORD = "demo1234"
 PFE_OFFER_TITLE = "PFE — Plateforme de gestion des stages et PFE (Django)"
@@ -290,14 +290,31 @@ class Command(BaseCommand):
                     f"rapport_pfe_{livrable.pk}.pdf", File(handle), save=True)
             attached += 1
 
+        # -- rooms and slots (item 19) --------------------------------------
+        salles = {}
+        for nom, batiment, capacite in (
+            ("Amphi A", "Bloc A", 120), ("Amphi C", "Bloc C", 80),
+            ("Salle B12", "Bloc B", 30), ("Salle B14", "Bloc B", 30),
+        ):
+            salles[nom], _ = Salle.objects.update_or_create(
+                nom=nom, defaults={"batiment": batiment, "capacite": capacite, "active": True})
+
+        def creneau(debut, minutes=60):
+            return Creneau.objects.get_or_create(debut=debut, fin=debut + timedelta(minutes=minutes))[0]
+
+        # An upcoming session two weeks ahead, so defenses can be planned with the demo data.
+        jour = timezone.localdate() + timedelta(days=14)
+        for heure in (9, 10, 11, 14, 15, 16):
+            creneau(timezone.make_aware(datetime(jour.year, jour.month, jour.day, heure)))
+
         # -- defenses ------------------------------------------------------
         soutenances = {}
         if "yassine" in projets:
             soutenances["yassine"], _ = Soutenance.objects.update_or_create(
                 projet=projets["yassine"],
                 defaults={
-                    "date": at(2026, 10, 20, 10),
-                    "salle": "Amphi C",
+                    "creneau": creneau(at(2026, 10, 20, 10)),
+                    "salle": salles["Amphi C"],
                     "remarques": "Bon niveau technique, présentation claire.",
                 },
             )
@@ -315,14 +332,14 @@ class Command(BaseCommand):
         if "sami" in projets:
             soutenances["sami"], _ = Soutenance.objects.update_or_create(
                 projet=projets["sami"],
-                defaults={"date": at(2026, 11, 1, 9), "salle": "Amphi A", "remarques": ""},
+                defaults={"creneau": creneau(at(2026, 11, 1, 9)), "salle": salles["Amphi A"], "remarques": ""},
             )
             soutenances["sami"].jury.set([jury, jury2])
 
         if "jihen" in projets:
             soutenances["jihen"], _ = Soutenance.objects.update_or_create(
                 projet=projets["jihen"],
-                defaults={"date": at(2026, 11, 4, 14), "salle": "Salle B12", "remarques": ""},
+                defaults={"creneau": creneau(at(2026, 11, 4, 14)), "salle": salles["Salle B12"], "remarques": ""},
             )
             soutenances["jihen"].jury.set([jury2])
 
@@ -341,11 +358,11 @@ class Command(BaseCommand):
                 f"livrables={projet.livrables.count()}  {projet.sujet}")
 
         say("\nDefenses")
-        for soutenance in Soutenance.objects.order_by("date"):
+        for soutenance in Soutenance.objects.select_related("creneau", "salle").order_by("creneau__debut"):
             moyenne = soutenance.moyenne
             moyenne = f"{moyenne:.2f}" if moyenne is not None else "-"
             moment = timezone.localtime(soutenance.date)
-            say(f"  #{soutenance.pk:<3} {moment:%d/%m/%Y %H:%M} {soutenance.salle:<10} "
+            say(f"  #{soutenance.pk:<3} {moment:%d/%m/%Y %H:%M} {soutenance.salle.nom:<10} "
                 f"moyenne={moyenne}  {soutenance.projet.sujet[:45]}")
 
         say(f"\nPDF source: {report}")

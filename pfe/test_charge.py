@@ -1,14 +1,12 @@
 """Tests for the academic supervisor's workload (backlog item 16)."""
 
-from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 
 from accounts.models import User
-from soutenances.models import Soutenance
+from soutenances import fabriques
 
 from .charge import annoter_charge, charge_encadrant, niveau
 from .models import Livrable, ProjetPFE
@@ -78,14 +76,14 @@ class ChargeServiceTests(ChargeBaseTestCase):
         Livrable.objects.create(projet=projet, titre='A', fichier='a.pdf', status=Livrable.Status.DEPOSE)
         Livrable.objects.create(projet=projet, titre='B', fichier='b.pdf', status=Livrable.Status.DEPOSE)
         Livrable.objects.create(projet=projet, titre='C', fichier='c.pdf', status=Livrable.Status.A_CORRIGER)
-        Soutenance.objects.create(projet=projet, date=timezone.now() + timedelta(days=5), salle='Amphi A')
+        fabriques.soutenance(projet, jours=5, nom_salle='Amphi A')
         passe = self._projet(self.etudiants[1], S.SOUTENU)
-        Soutenance.objects.create(projet=passe, date=timezone.now() - timedelta(days=5), salle='Amphi B')
+        fabriques.soutenance(passe, jours=-5, nom_salle='Amphi B')
 
         charge = charge_encadrant(self.acad)
         self.assertEqual(charge['livrables_a_valider'], 2)
         self.assertEqual(charge['livrables_a_corriger'], 1)
-        self.assertEqual([s.salle for s in charge['soutenances_a_venir']], ['Amphi A'])
+        self.assertEqual([s.salle.nom for s in charge['soutenances_a_venir']], ['Amphi A'])
         ligne = charge['projets_actifs'].get(pk=projet.pk)
         self.assertEqual((ligne.livrables_en_attente, ligne.livrables_a_corriger), (2, 1))
 

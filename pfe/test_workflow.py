@@ -1,13 +1,12 @@
 """Tests for the PFE state machine (backlog item 14)."""
 
-from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 
 from accounts.models import User
 from notifications.models import Notification
+from soutenances import fabriques
 from soutenances.models import NoteSoutenance, Soutenance
 
 from .models import HistoriqueStatut, Livrable, ProjetPFE
@@ -134,8 +133,7 @@ class TransitionRulesTests(WorkflowBaseTestCase):
 
     def test_soutenir_requires_every_jury_grade(self):
         projet = self._projet(S.PLANIFIE)
-        soutenance = Soutenance.objects.create(
-            projet=projet, date=timezone.now() + timedelta(days=3), salle='A1')
+        soutenance = fabriques.soutenance(projet, jours=3, nom_salle='A1')
         soutenance.jury.set([self.jury, self.jury2])
         NoteSoutenance.objects.create(soutenance=soutenance, jury_member=self.jury, note=14)
         projet = ProjetPFE.objects.get(pk=projet.pk)
@@ -229,8 +227,8 @@ class DefenseLifecycleTests(WorkflowBaseTestCase):
         self.client.force_login(self.admin)
         return self.client.post(reverse('soutenances:planifier'), {
             'projet': projet.pk,
-            'date': (timezone.now() + timedelta(days=10)).strftime('%Y-%m-%dT%H:%M'),
-            'salle': 'Amphi B',
+            'creneau': fabriques.creneau(jours=10).pk,
+            'salle': fabriques.salle('Amphi B').pk,
             'jury': [self.jury.pk, self.jury2.pk],
         })
 
@@ -268,8 +266,7 @@ class DefenseLifecycleTests(WorkflowBaseTestCase):
 
     def test_grading_is_closed_before_the_defense_is_planned(self):
         projet = self._projet(S.EN_COURS)
-        soutenance = Soutenance.objects.create(
-            projet=projet, date=timezone.now() + timedelta(days=3), salle='A1')
+        soutenance = fabriques.soutenance(projet, jours=3, nom_salle='A1')
         soutenance.jury.set([self.jury])
         self.client.force_login(self.jury)
         response = self.client.post(

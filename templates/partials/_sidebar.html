@@ -75,6 +75,9 @@
         <a class="nav-link {% if rn == 'planning' %}active{% endif %}" href="{% url 'soutenances:planning' %}">
           <i class="bi bi-calendar3"></i> Planning soutenances
         </a>
+        <a class="nav-link {% if rn == 'ressources' %}active{% endif %}" href="{% url 'soutenances:ressources' %}">
+          <i class="bi bi-door-open"></i> Salles et créneaux
+        </a>
         <a class="nav-link" href="{% url 'admin:index' %}">
           <i class="bi bi-shield-lock"></i> Administration Django
         </a>

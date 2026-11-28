@@ -12,13 +12,64 @@
     <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-arrow-left me-1"></i> Tableau de bord
     </a>
+    <a href="{% url 'soutenances:ressources' %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-door-open me-1"></i> Salles et créneaux
+    </a>
     <a href="{% url 'soutenances:planifier' %}" class="btn btn-primary btn-sm">
       <i class="bi bi-calendar-plus me-1"></i> Planifier une soutenance
     </a>
   </div>
 </div>
 
+{# Upcoming sessions: one grid per day (slots x rooms) #}
+{% for journee in journees %}
+  <div class="card mb-4">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <h2 class="h6 mb-0"><i class="bi bi-calendar-week me-1"></i> {{ journee.jour|date:"l d F Y" }}</h2>
+      <span class="badge text-bg-light border">{{ journee.nb_soutenances }} soutenance{{ journee.nb_soutenances|pluralize }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" style="width: 8rem;">Créneau</th>
+            {% for salle in journee.salles %}
+              <th scope="col">{{ salle.nom }}{% if not salle.active %} <span class="text-muted">(désactivée)</span>{% endif %}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for ligne in journee.lignes %}
+            <tr>
+              <th scope="row" class="text-nowrap">{{ ligne.creneau.debut|date:"H:i" }}–{{ ligne.creneau.fin|date:"H:i" }}</th>
+              {% for cellule in ligne.cellules %}
+                <td>
+                  {% for s in cellule %}
+                    <div class="{% if not forloop.first %}mt-1 pt-1 border-top{% endif %}">
+                      <div class="fw-semibold">{{ s.projet.etudiant.get_full_name|default:s.projet.etudiant.username }}</div>
+                      <div class="text-muted text-truncate" style="max-width: 14rem;" title="{{ s.projet.sujet }}">{{ s.projet.sujet }}</div>
+                    </div>
+                  {% empty %}
+                    <span class="text-body-tertiary">Libre</span>
+                  {% endfor %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% empty %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-1"></i>
+    Aucun créneau à venir. <a href="{% url 'soutenances:ressources' %}" class="alert-link">Créez les créneaux de la session</a>
+    pour pouvoir planifier des soutenances.
+  </div>
+{% endfor %}
+
 {% if soutenances %}
+  <h2 class="h5 mb-3">Toutes les soutenances</h2>
   <div class="card">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
@@ -42,7 +93,7 @@
                 </div>
                 <div class="text-muted small">
                   <i class="bi bi-clock me-1"></i>
-                  {{ soutenance.date|date:"H:i" }}
+                  {{ soutenance.creneau.debut|date:"H:i" }}–{{ soutenance.creneau.fin|date:"H:i" }}
                 </div>
               </td>
               <td>

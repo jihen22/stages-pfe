@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import NoteSoutenance, Soutenance
+from .models import Creneau, NoteSoutenance, Salle, Soutenance
 
 
 class NoteSoutenanceInline(admin.TabularInline):
@@ -9,13 +9,27 @@ class NoteSoutenanceInline(admin.TabularInline):
     autocomplete_fields = ('jury_member',)
 
 
+@admin.register(Salle)
+class SalleAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'batiment', 'capacite', 'active')
+    list_filter = ('active',)
+    search_fields = ('nom', 'batiment')
+
+
+@admin.register(Creneau)
+class CreneauAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'debut', 'fin')
+    date_hierarchy = 'debut'
+
+
 @admin.register(Soutenance)
 class SoutenanceAdmin(admin.ModelAdmin):
-    list_display = ('projet', 'date', 'salle', 'get_moyenne', 'date_creation')
-    list_filter = ('date', 'salle')
+    list_display = ('projet', 'creneau', 'salle', 'get_moyenne', 'date_creation')
+    list_filter = ('salle', 'creneau__debut')
+    list_select_related = ('projet', 'creneau', 'salle')
     search_fields = (
         'projet__sujet',
-        'salle',
+        'salle__nom',
         'projet__etudiant__username',
         'projet__etudiant__last_name',
     )

@@ -1,6 +1,57 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
+
+
+class Salle(models.Model):
+    """A room where defenses can take place (item 19)."""
+
+    nom = models.CharField('Nom', max_length=100, unique=True)
+    batiment = models.CharField('Bâtiment', max_length=100, blank=True)
+    capacite = models.PositiveSmallIntegerField('Capacité (places)', default=30)
+    active = models.BooleanField(
+        'Disponible', default=True,
+        help_text="Une salle désactivée n'est plus proposée pour les nouvelles soutenances.",
+    )
+
+    class Meta:
+        ordering = ['nom']
+        verbose_name = 'salle'
+        verbose_name_plural = 'salles'
+
+    def __str__(self):
+        return self.nom
+
+
+class Creneau(models.Model):
+    """A time slot of a defense session (item 19)."""
+
+    debut = models.DateTimeField('Début')
+    fin = models.DateTimeField('Fin')
+
+    class Meta:
+        ordering = ['debut', 'fin']
+        verbose_name = 'créneau'
+        verbose_name_plural = 'créneaux'
+        constraints = [
+            models.CheckConstraint(condition=models.Q(fin__gt=models.F('debut')), name='creneau_fin_apres_debut'),
+            models.UniqueConstraint(fields=['debut', 'fin'], name='creneau_unique'),
+        ]
+
+    def __str__(self):
+        debut = timezone.localtime(self.debut)
+        fin = timezone.localtime(self.fin)
+        return f"{debut:%d/%m/%Y} {debut:%H:%M}–{fin:%H:%M}"
+
+    def clean(self):
+        if self.debut and self.fin and self.fin <= self.debut:
+            raise ValidationError({'fin': 'La fin du créneau doit être après son début.'})
+
+    @property
+    def duree_minutes(self):
+        return int((self.fin - self.debut).total_seconds() // 60)
 
 
 class Soutenance(models.Model):
@@ -10,8 +61,18 @@ class Soutenance(models.Model):
         related_name='soutenance',
         verbose_name='Projet PFE',
     )
-    date = models.DateTimeField('Date et heure')
-    salle = models.CharField('Salle', max_length=100)
+    creneau = models.ForeignKey(
+        Creneau,
+        on_delete=models.PROTECT,
+        related_name='soutenances',
+        verbose_name='Créneau',
+    )
+    salle = models.ForeignKey(
+        Salle,
+        on_delete=models.PROTECT,
+        related_name='soutenances',
+        verbose_name='Salle',
+    )
     jury = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name='soutenances_jury',
@@ -23,7 +84,7 @@ class Soutenance(models.Model):
     date_creation = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['date']
+        ordering = ['creneau__debut']
         verbose_name = 'soutenance'
         verbose_name_plural = 'soutenances'
 
@@ -32,6 +93,15 @@ class Soutenance(models.Model):
             return f'Soutenance : {self.projet.sujet}'
         except Exception:
             return f'Soutenance #{self.pk}'
+
+    @property
+    def date(self):
+        """Start of the defense (its slot's start); kept so pages can use ``soutenance.date``."""
+        return self.creneau.debut
+
+    @property
+    def fin(self):
+        return self.creneau.fin
 
     @property
     def moyenne(self):

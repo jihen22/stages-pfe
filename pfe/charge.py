@@ -55,7 +55,7 @@ def charge_encadrant(encadrant):
 
     projets_actifs = (
         projets.filter(status__in=ETATS_ACTIFS)
-        .select_related('etudiant', 'soutenance')
+        .select_related('etudiant', 'soutenance', 'soutenance__creneau')
         .annotate(
             livrables_en_attente=Count(
                 'livrables', filter=Q(livrables__status=Livrable.Status.DEPOSE), distinct=True),
@@ -87,9 +87,9 @@ def charge_encadrant(encadrant):
         'livrables_a_corriger': Livrable.objects.dernieres_versions().filter(
             projet__encadrant_acad=encadrant, status=Livrable.Status.A_CORRIGER).count(),
         'soutenances_a_venir': (
-            Soutenance.objects.filter(projet__encadrant_acad=encadrant, date__gte=timezone.now())
-            .select_related('projet', 'projet__etudiant')
-            .order_by('date')
+            Soutenance.objects.filter(projet__encadrant_acad=encadrant, creneau__debut__gte=timezone.now())
+            .select_related('projet', 'projet__etudiant', 'creneau', 'salle')
+            .order_by('creneau__debut')
         ),
         'projets_actifs': projets_actifs,
     }

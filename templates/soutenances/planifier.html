@@ -6,7 +6,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
   <div>
     <h1 class="h3 mb-1">Planifier une soutenance</h1>
-    <p class="text-muted mb-0">Affectez un projet PFE, fixez la date et la salle, et désignez les membres du jury.</p>
+    <p class="text-muted mb-0">Choisissez un projet terminé, un créneau, une salle et les membres du jury.</p>
   </div>
   <div class="d-flex gap-2">
     <a href="{% url 'soutenances:planning' %}" class="btn btn-outline-secondary btn-sm">
@@ -28,6 +28,15 @@
         <form method="post" novalidate>
           {% csrf_token %}
 
+          {% if aucun_creneau or aucune_salle %}
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              {% if aucun_creneau %}Aucun créneau à venir.{% endif %}
+              {% if aucune_salle %}Aucune salle disponible.{% endif %}
+              <a href="{% url 'soutenances:ressources' %}" class="alert-link">Créer des salles et des créneaux</a>
+            </div>
+          {% endif %}
+
           {% if form.non_field_errors %}
             <div class="alert alert-danger mb-3">
               {{ form.non_field_errors }}
@@ -47,13 +56,13 @@
 
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label for="{{ form.date.id_for_label }}" class="form-label fw-semibold">
-                {{ form.date.label }} <span class="text-danger">*</span>
+              <label for="{{ form.creneau.id_for_label }}" class="form-label fw-semibold">
+                {{ form.creneau.label }} <span class="text-danger">*</span>
               </label>
-              {{ form.date }}
-              <div class="form-text">Date et créneau horaire prévu.</div>
-              {% if form.date.errors %}
-                <div class="invalid-feedback d-block">{{ form.date.errors|first }}</div>
+              {{ form.creneau }}
+              <div class="form-text">Créneaux à venir, définis dans « Salles et créneaux ».</div>
+              {% if form.creneau.errors %}
+                <div class="invalid-feedback d-block">{{ form.creneau.errors|first }}</div>
               {% endif %}
             </div>
 
@@ -62,7 +71,7 @@
                 {{ form.salle.label }} <span class="text-danger">*</span>
               </label>
               {{ form.salle }}
-              <div class="form-text">Ex. : Salle 104, Amphi B, Visioconférence...</div>
+              <div class="form-text">Salles disponibles. <a href="{% url 'soutenances:ressources' %}">Gérer les salles</a></div>
               {% if form.salle.errors %}
                 <div class="invalid-feedback d-block">{{ form.salle.errors|first }}</div>
               {% endif %}

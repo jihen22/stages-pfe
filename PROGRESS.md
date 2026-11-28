@@ -1,18 +1,18 @@
 # Progress: backlog status
 
-Audit date: 2026-11-28. Last update: item 12 done (2026-11-28).
+Audit date: 2026-11-28. Last update: item 19 done (2026-11-28).
 Rules: CLAUDE.md and BACKLOG.md as of this date (items 1–39, 168 jours-homme, SQLite, no Docker).
 Method: I read the code only and changed nothing.
 
 ## Tests
 
-`python manage.py test` → **Ran 190 tests, OK** (0 failures, 0 errors).
+`python manage.py test` → **Ran 211 tests, OK** (0 failures, 0 errors).
 
 | App | Tests |
 |---|---|
 | accounts | 38 |
 | pfe | 103 (30 in `tests.py` + 27 in `test_workflow.py` + 11 in `test_charge.py` + 19 in `test_suggestion.py` + 16 in `test_versions.py`) |
-| soutenances | 17 |
+| soutenances | 38 (17 in `tests.py` + 21 in `test_salles_creneaux.py`) |
 | notifications | 10 |
 | candidatures | 3 |
 | offres | 19 |
@@ -31,18 +31,18 @@ For criterion 5, a test only counts when it checks the item's main behaviour. A 
 
 | | Done | Total | % |
 |---|---|---|---|
-| All items | **44 j** | 168 j | **26.2 %** |
-| Non-AI items | **44 j** | 107 j | **41.1 %** |
+| All items | **50 j** | 168 j | **29.8 %** |
+| Non-AI items | **50 j** | 107 j | **46.7 %** |
 
-DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) = 44 j.
+DONE items: 1 (5 j) + 3 (3 j) + 4 (2 j) + 5 (3 j) + 6 (4 j) + 7 (4 j) + 8 (2 j) + 10 (6 j) + 12 (4 j) + 13 (3 j) + 14 (6 j) + 16 (2 j) + 19 (6 j) = 50 j.
 PARTIAL items count for 0 j.
 
 ## Summary
 
 | Status | Count | Items |
 |---|---|---|
-| DONE | 12 | 1, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16 |
-| PARTIAL | 7 | 2, 19, 21, 22, 35, 36, 38 |
+| DONE | 13 | 1, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16, 19 |
+| PARTIAL | 6 | 2, 21, 22, 35, 36, 38 |
 | NOT STARTED | 20 | 9, 11, 15, 17, 18, 20, 23, 24–34, 37, 39 |
 | **Total** | **39** | |
 
@@ -68,7 +68,7 @@ PARTIAL items count for 0 j.
 | 16 | Academic supervisor sees their workload | 2 | Web | **DONE** | Capacity: `User.capacite_encadrement` (`accounts/models.py:66-71`, migration `accounts/migrations/0008_user_capacite_encadrement.py`, editable in the Django admin). Workload service: `pfe/charge.py` (`charge_encadrant`, `annoter_charge` for item 10, `niveau`). Page: `pfe/views.py:168` (`ma_charge`, academic supervisor only), URL `pfe:ma_charge`, `templates/pfe/ma_charge.html` (gauge vs capacity, overload alert, breakdown by status, deliverables to review / in correction, per-student follow-up, upcoming defenses). Also on `templates/accounts/dashboards/encadrant_acad.html` and in the sidebar. Tests: `pfe/test_charge.py` (11 tests) | — (capacity is set by the admin; the supervisor only reads it). |
 | 17 | Admin generates documents (agreement, certificate, minutes) | 5 | Web | NOT STARTED | No document model, no PDF library in `requirements.txt` (only `Django==5.2.18`). The wording only appears in marketing text, `templates/home.html:165`. | Everything. |
 | 18 | Company supervisor approves the generated agreement | 2 | Web | NOT STARTED | Depends on 17. No agreement model. | Everything. |
-| 19 | Plan defenses (juries, rooms, time slots) | 6 | Web | PARTIAL | `soutenances/models.py:6-41`, `soutenances/migrations/0001_initial.py`, `soutenances/views.py:152-196`, `soutenances/forms.py:11-48`, `templates/soutenances/planning.html`, `planifier.html`, tests `soutenances/tests.py:190-240` | Room is free text (no `Salle` model). No time slots (a single `DateTimeField`, no duration). |
+| 19 | Plan defenses (juries, rooms, time slots) | 6 | Web | **DONE** | Models: `Salle` and `Creneau` (end after start, unique), `Soutenance.creneau` / `Soutenance.salle` foreign keys (`soutenances/models.py:8-110`), migration `soutenances/migrations/0002_salles_creneaux.py` (converts existing defenses: room names → rooms, dates → 1-hour slots). Rooms and slots page (admin only): `soutenances/views.py:277-347` (`ressources`, `basculer_salle`, `supprimer_creneau`), `templates/soutenances/ressources.html` (add / deactivate rooms, add one slot, generate a day of slots with duration and break). Planning: `SoutenanceForm` (finished project + upcoming slot + active room + jury), `soutenances/views.py:183-232` (grid per day: slots × rooms), `templates/soutenances/planning.html`, `planifier.html`. Tests: `soutenances/test_salles_creneaux.py` (21 tests) | Double bookings (same room / jury / student in one slot) are item 20. |
 | 20 | Detect / fix scheduling conflicts | 5 | Web | NOT STARTED | `SoutenanceForm` (`soutenances/forms.py:11-48`) has no overlap check for room, jury or time. Only "one defense per project" is blocked (`soutenances/views.py:176`). | Everything. |
 | 21 | Jury: notice, schedule, reports, grades | 5 | Web | PARTIAL | Schedule: `soutenances/views.py:49-75`, `templates/soutenances/mes_soutenances.html`. Grades: `soutenances/models.py:44-73`, `soutenances/views.py:78-149`, `saisir_note.html`. Tests `soutenances/tests.py:128-188` | No notice (nothing to view/download). The jury cannot open the student's reports (no link to `Livrable` in `templates/soutenances/`). |
 | 22 | Student: defense schedule + notice | 2 | Web | PARTIAL | `soutenances/views.py:33-46`, `templates/soutenances/ma_soutenance.html` (date, room, jury, average), tests `soutenances/tests.py:113-126` | No notice document. |
@@ -85,25 +85,25 @@ PARTIAL items count for 0 j.
 | 33 | Log model versions | 3 | AI | NOT STARTED | No code. | Everything. |
 | 34 | Data quality / privacy for models | 4 | AI | NOT STARTED | No code. | Everything. |
 | 35 | Admin analytics dashboards (+ predictive indicators) | 6 | Mixed | PARTIAL | `accounts/views.py:120-128` (4 counters), `templates/accounts/dashboards/admin.html` | No real analytics (trends, breakdowns, charts). No empty extension point for predictive indicators. Only a "page loads" test (`accounts/tests.py:98`). |
-| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 190 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
+| 36 | Fast, stable app (integration tests, optimisation, bug fixes) | 6 | Web | PARTIAL | 211 passing tests, including a full workflow test (`candidatures/tests.py:34-81`) and role-access tests in every app. `select_related`/`prefetch_related` in the views. | No integration test across the whole chain (offer → PFE → deliverable → defense → grade). No performance check. |
 | 37 | Stable production URL | 5 | Web | NOT STARTED | `crud/settings.py` is in development mode only (DEBUG, no `ALLOWED_HOSTS`/static config for production). No deployment files. | Everything. |
 | 38 | Technical docs + user manual | 4 | Web | PARTIAL | `README.md` (install, demo data, demo accounts), `CONTRIBUTING.md` | No user manual per role. No architecture/technical documentation (models, roles, flows). |
 | 39 | Final acceptance testing | 5 | Web | NOT STARTED | No acceptance checklist or report. | Everything (comes last). |
 
 ## Next 5 non-AI items to build (dependency order)
 
-1. **Item 19: plan defenses with rooms and time slots** (6 j).
-   - Builds on the `TERMINE → PLANIFIE` transition. Conflict detection (20) needs rooms and slots.
-2. **Item 20: detect and fix scheduling conflicts** (5 j).
-   - Needs the rooms and slots from item 19.
-3. **Item 17: admin generates documents (agreement, certificate, minutes)** (5 j).
+1. **Item 20: detect and fix scheduling conflicts** (5 j).
+   - Uses the rooms and slots from item 19: same room, jury member or student twice in overlapping slots.
+2. **Item 17: admin generates documents (agreement, certificate, minutes)** (5 j).
    - The certificate and minutes depend on the « soutenu » state and the grades (items 14, 21).
-4. **Item 18: company supervisor approves the generated agreement** (2 j).
+3. **Item 18: company supervisor approves the generated agreement** (2 j).
    - Needs the agreement from item 17.
-5. **Item 21: jury notice, schedule, reports and grades** (5 j).
-   - The reports now have versions (item 12): the jury reads the latest approved version.
+4. **Item 21: jury notice, schedule, reports and grades** (5 j).
+   - The notice uses the slot and room (item 19); the reports use the latest approved versions (item 12).
+5. **Item 22: student's defense schedule and notice** (2 j).
+   - Same notice as item 21, for the student.
 
-After these: 22 (student notice) → 11, 15, 23.
+After these: 11, 15, 23.
 
 
 ## Change log
@@ -217,3 +217,22 @@ Files changed:
 Checked: migration on a copy of the real database (9 deliverables → v1, nothing lost); new version uploaded with demo data (`etudiant2`: v1 replaced, page shows v2 + history).
 
 What's left (outside item 12): nothing.
+
+### Item 19: defenses planned by room and time slot (done 2026-11-28)
+
+- Rooms (`Salle`: name, building, capacity, available or not) and time slots (`Creneau`: start, end) are now data managed by the admin on « Salles et créneaux ».
+- A whole day of slots can be generated at once (from / to, duration, break); existing slots are skipped. Unused slots can be deleted; used slots and rooms are protected.
+- Planning a defense = a finished project + an upcoming slot + an available room + the jury. Participants are notified with the date and time range.
+- The planning page shows one grid per upcoming day (slots × rooms, « Libre » where nothing is planned) above the full list.
+- `soutenance.date` still gives the start (from the slot), so the student, jury and workload pages kept working; they now show the time range.
+
+Files changed:
+- Models and migration: `soutenances/models.py`, `soutenances/migrations/0002_salles_creneaux.py`, `soutenances/admin.py`
+- Forms, views, URLs: `soutenances/forms.py`, `soutenances/views.py`, `soutenances/urls.py`, `pfe/charge.py`
+- Templates: `templates/soutenances/ressources.html` (new), `planning.html`, `planifier.html`, `ma_soutenance.html`, `mes_soutenances.html`, `saisir_notes_list.html`, `templates/partials/_sidebar.html`, `templates/accounts/dashboards/admin.html`
+- Demo data: `accounts/management/commands/seed_showcase.py` (4 rooms, slots of the existing defenses, a session of 6 slots two weeks ahead)
+- Tests: `soutenances/test_salles_creneaux.py` (new), `soutenances/fabriques.py` (new test helpers), `soutenances/tests.py`, `pfe/test_charge.py`, `pfe/test_workflow.py`
+
+Checked: migration on a copy of the real database (3 defenses → 3 rooms + 3 slots, same times); « Salles et créneaux », planning grid and planning form read with demo data.
+
+What's left (outside item 19): conflict detection (item 20).

@@ -1,14 +1,13 @@
-from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 
 from accounts.models import User
 from notifications.models import Notification
 from offres.models import Offre
 from pfe.models import ProjetPFE
 
+from . import fabriques
 from .models import NoteSoutenance, Soutenance
 
 
@@ -64,11 +63,10 @@ class SoutenanceBaseTestCase(TestCase):
             status=ProjetPFE.Status.TERMINE,
         )
 
-        cls.soutenance = Soutenance.objects.create(
-            projet=cls.projet,
-            date=timezone.now() + timedelta(days=7),
-            salle='Amphi A',
-        )
+        cls.soutenance = fabriques.soutenance(cls.projet, nom_salle='Amphi A')
+        # Room and upcoming slot offered by the planning form.
+        cls.salle_b = fabriques.salle('Amphi B')
+        cls.creneau_libre = fabriques.creneau(jours=14)
         cls.soutenance.jury.set([cls.jury, cls.jury2])
         cls.note = NoteSoutenance.objects.create(
             soutenance=cls.soutenance,
@@ -198,30 +196,29 @@ class PlanningTests(SoutenanceBaseTestCase):
         self.assertEqual(self.client.get(reverse('soutenances:planifier')).status_code, 200)
 
     def test_admin_can_schedule_a_defense(self):
-        date = (timezone.now() + timedelta(days=14)).strftime('%Y-%m-%dT%H:%M')
         self.client.force_login(self.admin)
         response = self.client.post(reverse('soutenances:planifier'), {
             'projet': self.projet_sans_soutenance.pk,
-            'date': date,
-            'salle': 'Amphi B',
+            'creneau': self.creneau_libre.pk,
+            'salle': self.salle_b.pk,
             'jury': [self.jury.pk, self.jury2.pk],
         })
         self.assertRedirects(response, reverse('soutenances:planning'))
 
         soutenance = Soutenance.objects.get(projet=self.projet_sans_soutenance)
-        self.assertEqual(soutenance.salle, 'Amphi B')
+        self.assertEqual(soutenance.salle, self.salle_b)
+        self.assertEqual(soutenance.creneau, self.creneau_libre)
         self.assertEqual(soutenance.jury.count(), 2)
         self.assertTrue(Notification.objects.filter(user=self.autre_etudiant).exists())
         self.assertTrue(Notification.objects.filter(user=self.jury).exists())
 
     def test_jury_is_required(self):
         """Regression from the last commit: the jury field must be mandatory."""
-        date = (timezone.now() + timedelta(days=14)).strftime('%Y-%m-%dT%H:%M')
         self.client.force_login(self.admin)
         response = self.client.post(reverse('soutenances:planifier'), {
             'projet': self.projet_sans_soutenance.pk,
-            'date': date,
-            'salle': 'Amphi B',
+            'creneau': self.creneau_libre.pk,
+            'salle': self.salle_b.pk,
         })
         self.assertEqual(response.status_code, 200)
         self.assertIn('jury', response.context['form'].errors)
@@ -230,12 +227,11 @@ class PlanningTests(SoutenanceBaseTestCase):
         )
 
     def test_a_project_cannot_be_scheduled_twice(self):
-        date = (timezone.now() + timedelta(days=14)).strftime('%Y-%m-%dT%H:%M')
         self.client.force_login(self.admin)
         response = self.client.post(reverse('soutenances:planifier'), {
             'projet': self.projet.pk,
-            'date': date,
-            'salle': 'Amphi B',
+            'creneau': self.creneau_libre.pk,
+            'salle': self.salle_b.pk,
             'jury': [self.jury.pk],
         })
         self.assertEqual(response.status_code, 200)
